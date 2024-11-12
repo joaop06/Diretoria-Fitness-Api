@@ -11,7 +11,7 @@ export class TrainingBetService {
   constructor(
     @InjectRepository(TrainingBetEntity)
     private trainingBetRepository: Repository<TrainingBetEntity>,
-  ) { }
+  ) {}
 
   async create(object: CreateTrainingBetDto): Promise<TrainingBetEntity> {
     try {
@@ -47,12 +47,10 @@ export class TrainingBetService {
         object.initialDate,
         'days',
       );
+      object = { ...object, duration };
 
-      const result = await this.trainingBetRepository.save({
-        ...object,
-        duration,
-      });
-      return result;
+      const newTrainingBet = await this.trainingBetRepository.create(object);
+      return await this.trainingBetRepository.save(newTrainingBet);
     } catch (e) {
       throw e;
     }

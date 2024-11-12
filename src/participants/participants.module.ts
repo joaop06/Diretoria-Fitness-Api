@@ -11,9 +11,9 @@ import { UsersModule } from 'src/users/users.module';
   providers: [ParticipantsService],
   controllers: [ParticipantsController],
   imports: [
-    TypeOrmModule.forFeature([ParticipantsEntity]),
-    TrainingBetModule,
     UsersModule,
+    TrainingBetModule,
+    TypeOrmModule.forFeature([ParticipantsEntity]),
   ],
 })
 export class ParticipantsModule {}

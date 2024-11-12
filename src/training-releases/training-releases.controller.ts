@@ -1,4 +1,9 @@
+import * as path from 'path';
+import { v4 as uuidv4 } from 'uuid';
+import { diskStorage } from 'multer';
 import { Exception } from 'interceptors/exception.filter';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { FindOptionsDto, FindReturnModelDto } from 'dto/find.dto';
 import { TrainingReleasesEntity } from './training-releases.entity';
 import { TrainingReleasesService } from './training-releases.service';
 import { CreateTrainingReleasesDto } from './dto/create-training-release.dto';
@@ -11,8 +16,9 @@ import {
   Patch,
   Delete,
   Controller,
+  UploadedFile,
+  UseInterceptors,
 } from '@nestjs/common';
-import { FindOptionsDto, FindReturnModelDto } from 'dto/find.dto';
 
 @Controller('training-releases')
 export class TrainingReleasesController {
@@ -21,10 +27,23 @@ export class TrainingReleasesController {
   ) {}
 
   @Post()
+  @UseInterceptors(
+    FileInterceptor('file', {
+      storage: diskStorage({
+        destination: './public/imagesReleases',
+        filename: (req, file, cb) => {
+          const filename: string = uuidv4() + path.extname(file.originalname);
+          cb(null, filename);
+        },
+      }),
+    }),
+  )
   async create(
+    @UploadedFile() file: Express.Multer.File,
     @Body() object: CreateTrainingReleasesDto,
   ): Promise<TrainingReleasesEntity> {
     try {
+      object.imagePath = file.path;
       return await this.trainingReleasesService.create(object);
     } catch (e) {
       throw new Error(`Falha ao inserir lançamento: ${e.message}`);

@@ -9,12 +9,13 @@ import { FindOptionsDto, FindReturnModelDto } from 'dto/find.dto';
 export class BetDaysService {
   constructor(
     @InjectRepository(BetDaysEntity)
-    private trainingBetRepository: Repository<BetDaysEntity>,
+    private betDaysRepository: Repository<BetDaysEntity>,
   ) {}
 
   async create(object: CreateBetDayDto): Promise<BetDaysEntity> {
     try {
-      return await this.trainingBetRepository.save(object);
+      const newBetDay = await this.betDaysRepository.create(object);
+      return await this.betDaysRepository.save(newBetDay);
     } catch (e) {
       throw e;
     }
@@ -22,7 +23,7 @@ export class BetDaysService {
 
   async update(id: number, object: Partial<BetDaysEntity>) {
     try {
-      return await this.trainingBetRepository.update(id, object);
+      return await this.betDaysRepository.update(id, object);
     } catch (e) {
       throw e;
     }
@@ -30,7 +31,7 @@ export class BetDaysService {
 
   async delete(id: number): Promise<any> {
     try {
-      return await this.trainingBetRepository.softDelete(id);
+      return await this.betDaysRepository.softDelete(id);
     } catch (e) {
       throw e;
     }
@@ -38,7 +39,7 @@ export class BetDaysService {
 
   async findOne(id: number): Promise<BetDaysEntity> {
     try {
-      return await this.trainingBetRepository.findOne({ where: { id } });
+      return await this.betDaysRepository.findOne({ where: { id } });
     } catch (e) {
       throw e;
     }
@@ -47,8 +48,7 @@ export class BetDaysService {
   async findAll(
     options: FindOptionsDto<BetDaysEntity>,
   ): Promise<FindReturnModelDto<BetDaysEntity>> {
-    const [rows, count] =
-      await this.trainingBetRepository.findAndCount(options);
+    const [rows, count] = await this.betDaysRepository.findAndCount(options);
     return { rows, count };
   }
 }

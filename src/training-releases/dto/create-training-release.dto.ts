@@ -1,9 +1,11 @@
-import { IsString } from 'class-validator';
+import { IsOptional, IsString } from 'class-validator';
 
 export class CreateTrainingReleasesDto {
   @IsString()
-  comment: string;
+  @IsOptional()
+  comment?: string;
 
   @IsString()
+  @IsOptional()
   imagePath: string;
 }

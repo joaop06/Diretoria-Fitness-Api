@@ -14,8 +14,8 @@ export class UsersService {
 
   async create(object: CreateUserDto): Promise<UsersEntity> {
     try {
-      const result = await this.usersRepository.save(object);
-      return result;
+      const newUser = await this.usersRepository.create(object);
+      return await this.usersRepository.save(newUser);
     } catch (e) {
       throw e;
     }

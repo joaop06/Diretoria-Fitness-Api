@@ -1,4 +1,4 @@
-import { IsDateString, IsNumber } from 'class-validator';
+import { IsDateString, IsNumber, IsOptional } from 'class-validator';
 
 export class CreateTrainingBetDto {
   @IsDateString()
@@ -12,4 +12,8 @@ export class CreateTrainingBetDto {
 
   @IsNumber()
   minimumPenaltyAmount: number;
+
+  @IsNumber()
+  @IsOptional()
+  duration?: number;
 }

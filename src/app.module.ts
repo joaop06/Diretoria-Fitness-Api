@@ -1,23 +1,29 @@
 import * as dotenv from 'dotenv';
 dotenv.config();
 
+import { join } from 'path';
 import { Module } from '@nestjs/common';
 import { AppService } from './app.service';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
+import { ServeStaticModule } from '@nestjs/serve-static';
 
 import { UsersModule } from './users/users.module';
+import { BetDaysModule } from './bet-days/bet-days.module';
 import { TrainingBetModule } from './training-bet/training-bet.module';
 import { ParticipantsModule } from './participants/participants.module';
-import { BetDaysController } from './bet-days/bet-days.controller';
-import { BetDaysModule } from './bet-days/bet-days.module';
 import { TrainingReleasesModule } from './training-releases/training-releases.module';
 
 @Module({
+  providers: [AppService],
+  controllers: [AppController],
   imports: [
     UsersModule,
+    BetDaysModule,
     TrainingBetModule,
+    ParticipantsModule,
+    TrainingReleasesModule,
     TypeOrmModule.forRoot({
       type: 'mysql',
       host: process.env.DB_HOST,
@@ -29,11 +35,10 @@ import { TrainingReleasesModule } from './training-releases/training-releases.mo
       synchronize: process.env.NODE_ENV !== 'production',
     }),
     ConfigModule.forRoot({ isGlobal: true, envFilePath: '.env' }),
-    ParticipantsModule,
-    BetDaysModule,
-    TrainingReleasesModule,
+    ServeStaticModule.forRoot({
+      serveRoot: '/uploads', // Prefixo da URL
+      rootPath: join(__dirname, '..', 'public/imagesReleases'), // Caminho da pasta de uploads
+    }),
   ],
-  controllers: [AppController, BetDaysController],
-  providers: [AppService],
 })
 export class AppModule {}

@@ -16,7 +16,8 @@ export class TrainingReleasesService {
     object: CreateTrainingReleasesDto,
   ): Promise<TrainingReleasesEntity> {
     try {
-      return await this.trainingBetRepository.save(object);
+      const newTrainingBet = await this.trainingBetRepository.create(object);
+      return await this.trainingBetRepository.save(newTrainingBet);
     } catch (e) {
       throw e;
     }
