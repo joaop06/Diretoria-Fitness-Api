@@ -1,19 +1,42 @@
+import * as moment from 'moment';
 import { Repository } from 'typeorm';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { UsersService } from 'src/users/users.service';
 import { ParticipantsEntity } from './participants.entity';
 import { FindOptionsDto, FindReturnModelDto } from 'dto/find.dto';
 import { CreateParticipantDto } from './dto/create-participant.dto';
+import { TrainingBetService } from 'src/training-bet/training-bet.service';
 
 @Injectable()
 export class ParticipantsService {
     constructor(
         @InjectRepository(ParticipantsEntity)
         private participantsRepository: Repository<ParticipantsEntity>,
+        private trainingBetService: TrainingBetService,
+        private usersService: UsersService,
     ) { }
 
     async create(object: CreateParticipantDto): Promise<ParticipantsEntity> {
         try {
+            const trainingBet = await this.trainingBetService.findOne(
+                object.trainingBetId,
+            );
+            if (!trainingBet) {
+                throw new Error(`Aposta não encontrada`);
+            }
+
+            const user = await this.usersService.findOne(object.trainingBetId);
+            if (!user) {
+                throw new Error(`Usuário não encontrado`);
+            }
+
+            const today = moment();
+            const initialDate = moment(trainingBet.initialDate);
+            if (today.isAfter(initialDate)) {
+                throw new Error(`Não é possível participar de uma aposta em andamento`);
+            }
+
             return await this.participantsRepository.save(object);
         } catch (e) {
             throw e;
@@ -44,8 +67,11 @@ export class ParticipantsService {
         }
     }
 
-    async findAll(options: FindOptionsDto<ParticipantsEntity>): Promise<FindReturnModelDto<ParticipantsEntity>> {
-        const [rows, count] = await this.participantsRepository.findAndCount(options);
+    async findAll(
+        options: FindOptionsDto<ParticipantsEntity>,
+    ): Promise<FindReturnModelDto<ParticipantsEntity>> {
+        const [rows, count] =
+            await this.participantsRepository.findAndCount(options);
         return { rows, count };
     }
 }

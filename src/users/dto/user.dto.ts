@@ -1,27 +1,27 @@
 import { IsNumber, IsString, IsDateString } from 'class-validator';
 
 export class UserDto {
-    @IsNumber()
-    id: number;
+  @IsNumber()
+  id: number;
 
-    @IsString()
-    name: string;
+  @IsString()
+  name: string;
 
-    @IsString()
-    email: string;
+  @IsString()
+  email: string;
 
-    @IsString()
-    password?: string;
+  @IsString()
+  password?: string;
 
-    @IsString()
-    role?: string;
+  @IsString()
+  role?: string;
 
-    @IsDateString()
-    createdAt: Date;
+  @IsDateString()
+  createdAt: Date;
 
-    @IsDateString()
-    updatedAt: Date;
+  @IsDateString()
+  updatedAt: Date;
 
-    @IsDateString()
-    deletedAt?: Date;
+  @IsDateString()
+  deletedAt?: Date;
 }

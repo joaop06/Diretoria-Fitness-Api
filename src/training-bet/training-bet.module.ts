@@ -10,4 +10,4 @@ import { TrainingBetController } from './training-bet.controller';
   controllers: [TrainingBetController],
   imports: [TypeOrmModule.forFeature([TrainingBetEntity])],
 })
-export class TrainingBetModule { }
+export class TrainingBetModule {}

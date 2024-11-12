@@ -1,12 +1,12 @@
-import { IsString, IsNumber } from "class-validator";
+import { IsString, IsNumber } from 'class-validator';
 
 export class CreateBetDayDto {
-    @IsString()
-    nameDay: string;
+  @IsString()
+  nameDay: string;
 
-    @IsNumber()
-    totalFaults: number;
+  @IsNumber()
+  totalFaults: number;
 
-    @IsNumber()
-    utilization: number;
+  @IsNumber()
+  utilization: number;
 }

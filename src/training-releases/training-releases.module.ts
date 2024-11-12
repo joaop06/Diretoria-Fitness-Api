@@ -10,4 +10,4 @@ import { TrainingReleasesController } from './training-releases.controller';
   controllers: [TrainingReleasesController],
   imports: [TypeOrmModule.forFeature([TrainingReleasesEntity])],
 })
-export class TrainingReleasesModule { }
+export class TrainingReleasesModule {}

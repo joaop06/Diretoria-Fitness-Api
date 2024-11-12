@@ -10,4 +10,4 @@ import { BetDaysController } from './bet-days.controller';
   controllers: [BetDaysController],
   imports: [TypeOrmModule.forFeature([BetDaysEntity])],
 })
-export class BetDaysModule { }
+export class BetDaysModule {}

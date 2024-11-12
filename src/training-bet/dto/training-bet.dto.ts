@@ -1,30 +1,30 @@
 import { IsNumber, IsDateString } from 'class-validator';
 
 export class TrainingBetDto {
-    @IsNumber()
-    id: number;
+  @IsNumber()
+  id: number;
 
-    @IsDateString()
-    finalDate: Date;
+  @IsDateString()
+  finalDate: Date;
 
-    @IsNumber()
-    duration: number;
+  @IsNumber()
+  duration: number;
 
-    @IsDateString()
-    initialDate: Date;
+  @IsDateString()
+  initialDate: Date;
 
-    @IsNumber()
-    faultsAllowed: number;
+  @IsNumber()
+  faultsAllowed: number;
 
-    @IsNumber()
-    minimumPenaltyAmount: number;
+  @IsNumber()
+  minimumPenaltyAmount: number;
 
-    @IsDateString()
-    createdAt: Date;
+  @IsDateString()
+  createdAt: Date;
 
-    @IsDateString()
-    updatedAt: Date;
+  @IsDateString()
+  updatedAt: Date;
 
-    @IsDateString()
-    deletedAt?: Date;
+  @IsDateString()
+  deletedAt?: Date;
 }

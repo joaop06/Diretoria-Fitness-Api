@@ -1,9 +1,19 @@
-import { IsBoolean, IsNumber } from "class-validator";
+import { IsBoolean, IsNumber, IsNotEmpty, IsOptional } from 'class-validator';
 
 export class CreateParticipantDto {
-    @IsNumber()
-    faults: number;
+  @IsNumber()
+  @IsNotEmpty({ message: 'Usuário não informado' })
+  userId: number;
 
-    @IsBoolean()
-    declassified: boolean;
+  @IsNumber()
+  @IsNotEmpty({ message: 'Aposta não informada' })
+  trainingBetId: number;
+
+  @IsNumber()
+  @IsOptional()
+  faults?: number;
+
+  @IsBoolean()
+  @IsOptional()
+  declassified?: boolean;
 }

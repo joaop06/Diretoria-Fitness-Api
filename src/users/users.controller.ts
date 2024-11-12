@@ -6,7 +6,7 @@ import { Body, Controller, Get, Param, Patch, Post } from '@nestjs/common';
 
 @Controller('users')
 export class UsersController {
-  constructor(private readonly usersService: UsersService) { }
+  constructor(private readonly usersService: UsersService) {}
 
   @Post()
   async create(@Body() object: CreateUserDto): Promise<UsersEntity> {

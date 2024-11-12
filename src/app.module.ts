@@ -1,4 +1,6 @@
-require('dotenv').config()
+import * as dotenv from 'dotenv';
+dotenv.config();
+
 import { Module } from '@nestjs/common';
 import { AppService } from './app.service';
 import { ConfigModule } from '@nestjs/config';
@@ -34,4 +36,4 @@ import { TrainingReleasesModule } from './training-releases/training-releases.mo
   controllers: [AppController, BetDaysController],
   providers: [AppService],
 })
-export class AppModule { }
+export class AppModule {}
