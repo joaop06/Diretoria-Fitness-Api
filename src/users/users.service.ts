@@ -1,7 +1,7 @@
 import { Repository } from 'typeorm';
-import { InjectRepository } from '@nestjs/typeorm';
 import { Injectable } from '@nestjs/common';
-import { UsersEntity } from './users-entity';
+import { UsersEntity } from './users.entity';
+import { InjectRepository } from '@nestjs/typeorm';
 import { CreateUserDto } from './dto/create-user.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 
@@ -9,13 +9,13 @@ import { ChangePasswordDto } from './dto/change-password.dto';
 export class UsersService {
     constructor(
         @InjectRepository(UsersEntity)
-        private readonly usersRepository: Repository<UsersEntity>,
+        private usersRepository: Repository<UsersEntity>,
     ) { }
 
-    async create(object: CreateUserDto) {
+    async create(object: CreateUserDto): Promise<UsersEntity> {
         try {
-            return await this.usersRepository.save(object);
-
+            const result = await this.usersRepository.save(object);
+            return result;
         } catch (e) {
             throw e;
         }
@@ -24,7 +24,6 @@ export class UsersService {
     async update(id: number, object: Partial<UsersEntity>) {
         try {
             return await this.usersRepository.update(id, object);
-
         } catch (e) {
             throw e;
         }
@@ -33,7 +32,6 @@ export class UsersService {
     async findOne(id: number): Promise<UsersEntity> {
         try {
             return await this.usersRepository.findOne({ where: { id } });
-
         } catch (e) {
             throw e;
         }
@@ -47,6 +45,8 @@ export class UsersService {
         const passwordMatch = object.oldPassword === user.password;
         if (!passwordMatch) throw new Error('Senha antiga inválida');
 
-        return await this.usersRepository.update(userId, { password: object.newPassword });
+        return await this.usersRepository.update(userId, {
+            password: object.newPassword,
+        });
     }
 }

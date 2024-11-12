@@ -1,10 +1,16 @@
+require('dotenv').config()
 import { Module } from '@nestjs/common';
 import { AppService } from './app.service';
-import { AppController } from './app.controller';
+import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { AppController } from './app.controller';
 
 import { UsersModule } from './users/users.module';
 import { TrainingBetModule } from './training-bet/training-bet.module';
+import { ParticipantsModule } from './participants/participants.module';
+import { BetDaysController } from './bet-days/bet-days.controller';
+import { BetDaysModule } from './bet-days/bet-days.module';
+import { TrainingReleasesModule } from './training-releases/training-releases.module';
 
 @Module({
   imports: [
@@ -20,8 +26,12 @@ import { TrainingBetModule } from './training-bet/training-bet.module';
       entities: [__dirname + '/**/*.entity{.ts,.js}'],
       synchronize: process.env.NODE_ENV !== 'production',
     }),
+    ConfigModule.forRoot({ isGlobal: true, envFilePath: '.env' }),
+    ParticipantsModule,
+    BetDaysModule,
+    TrainingReleasesModule,
   ],
-  controllers: [AppController],
+  controllers: [AppController, BetDaysController],
   providers: [AppService],
 })
 export class AppModule { }
