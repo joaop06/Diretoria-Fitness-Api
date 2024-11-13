@@ -23,16 +23,30 @@ export class TrainingBetService {
     );
   }
 
-  async #validatePeriodConflict(object: Partial<CreateTrainingBetDto>) {
-    const conflict = await this.trainingBetRepository
-      .createQueryBuilder('training_bet')
-      .where('training_bet.initialDate < :finalDate', {
-        finalDate: object.finalDate,
-      })
-      .andWhere('training_bet.finalDate > :initialDate', {
-        initialDate: object.initialDate,
-      })
-      .getOne();
+  async #validatePeriodConflict(object: Partial<TrainingBetEntity>) {
+    let conflict: TrainingBetEntity | null;
+    if (object.id) {
+      conflict = await this.trainingBetRepository
+        .createQueryBuilder('training_bet')
+        .where('training_bet.initialDate < :finalDate', {
+          finalDate: object.finalDate,
+        })
+        .andWhere('training_bet.finalDate > :initialDate', {
+          initialDate: object.initialDate,
+        })
+        .andWhere('training_bet.id != :id', { id: object.id })
+        .getOne();
+    } else {
+      conflict = await this.trainingBetRepository
+        .createQueryBuilder('training_bet')
+        .where('training_bet.initialDate < :finalDate', {
+          finalDate: object.finalDate,
+        })
+        .andWhere('training_bet.finalDate > :initialDate', {
+          initialDate: object.initialDate,
+        })
+        .getOne();
+    }
 
     if (!!conflict) {
       throw new Error(
@@ -55,7 +69,9 @@ export class TrainingBetService {
   }
 
   #defineDuration(object: Partial<TrainingBetEntity>) {
-    const duration = moment(object.finalDate).diff(object.initialDate, 'days');
+    // +1 para considerar também o dia atual
+    const duration =
+      moment(object.finalDate).diff(object.initialDate, 'days') + 1;
 
     return { ...object, duration };
   }
@@ -65,35 +81,47 @@ export class TrainingBetService {
     duration: number,
     initialDate: Date | string,
   ) {
+    const trainingBet = await this.findOne(trainingBetId);
+
     const existingBetDays =
       await this.betDaysService.findAllByTrainingBetId(trainingBetId);
     const currentCount = existingBetDays.length;
 
     const betDays = [];
+    for (let i = 0; i < duration; i++) {
+      const currentDay = moment(initialDate).locale('pt-br').add(i, 'days');
+
+      const name = currentDay.format('ddd');
+      const formatedName = name[0].toUpperCase() + name.slice(1);
+
+      betDays.push({
+        trainingBet,
+        name: formatedName,
+        day: currentDay.format('YYYY-MM-DD'),
+      });
+    }
+
     if (duration > currentCount) {
       /**
        * Se a nova duração é maior que a quantidade atual de dias
        */
-      for (let i = currentCount; i < duration; i++) {
-        const currentDay = moment(initialDate).locale('pt-br').add(i, 'days');
-
-        const name = currentDay.format('ddd');
-        const formatedName = name[0].toUpperCase() + name.slice(1);
-
-        betDays.push({
-          trainingBetId: trainingBetId,
-          nameDay: `${formatedName} ${currentDay.format('DD/MM')}`,
-        });
-      }
-
       await this.betDaysService.bulkCreate(betDays);
     } else if (duration < currentCount) {
       /**
        * Deleta os dias sobressalentes a nova duração da aposta
        */
       const idsToRemove = existingBetDays
-        .slice(duration)
-        .map((betDay) => betDay.id);
+        .filter(
+          (day) =>
+            !betDays.find(
+              (item) =>
+                item.day === day.day &&
+                item.name === day.name &&
+                item.trainingBet.id === day.trainingBet.id,
+            ),
+        )
+        .map((item) => item.id);
+
       await this.betDaysService.bulkDelete(idsToRemove);
     }
   }
@@ -114,7 +142,7 @@ export class TrainingBetService {
       const newTrainingBet = this.trainingBetRepository.create(newObject);
       const result = await this.trainingBetRepository.save(newTrainingBet);
 
-      await this.#syncBetDays(result.id, object.duration, object.initialDate);
+      await this.#syncBetDays(result.id, result.duration, object.initialDate);
 
       return result;
     } catch (e) {
@@ -126,6 +154,7 @@ export class TrainingBetService {
     try {
       // Valida se há conflito das datas
       const trainingBet = await this.findOne(id);
+      if (!trainingBet) throw new Error('Aposta não encontrada');
 
       let newTrainingBet: Partial<TrainingBetEntity> = {
         ...object,
@@ -134,13 +163,16 @@ export class TrainingBetService {
       };
 
       // Valida se há conflito das datas
-      await this.#validatePeriodConflict(newTrainingBet);
+      await this.#validatePeriodConflict({ id, ...newTrainingBet });
 
       // Valida se a aposta já foi iniciada
       if (object.initialDate) this.#validateBetStarted(object.initialDate);
 
       newTrainingBet = this.#defineDuration(newTrainingBet);
-      const result = await this.trainingBetRepository.update(id, object);
+      const result = await this.trainingBetRepository.update(
+        id,
+        newTrainingBet,
+      );
 
       await this.#syncBetDays(
         id,

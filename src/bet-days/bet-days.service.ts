@@ -11,10 +11,29 @@ export class BetDaysService {
     private betDaysRepository: Repository<BetDaysEntity>,
   ) {}
 
-  async bulkCreate(days: CreateBetDayDto[]) {
+  async bulkCreate(allBetDays: CreateBetDayDto[]) {
     try {
-      const betDays = days.map((day) => this.betDaysRepository.create(day));
-      return await this.betDaysRepository.save(betDays);
+      const betDaysInstances = allBetDays.map((day) =>
+        this.betDaysRepository.create(day),
+      );
+
+      for (const betDay of betDaysInstances) {
+        const foundBetDay = await this.betDaysRepository.findOne({
+          where: {
+            day: betDay.day,
+            trainingBet: { id: betDay.trainingBet.id },
+          },
+          withDeleted: true,
+          relations: ['trainingBet'],
+        });
+
+        if (foundBetDay === null) await this.betDaysRepository.save(betDay);
+        else if (foundBetDay.deletedAt)
+          await this.betDaysRepository.update(foundBetDay.id, {
+            ...betDay,
+            deletedAt: null,
+          });
+      }
     } catch (e) {
       throw e;
     }
@@ -40,6 +59,7 @@ export class BetDaysService {
   async findAllByTrainingBetId(trainingBetId: number) {
     try {
       return await this.betDaysRepository.find({
+        order: { day: 'ASC' },
         relations: ['trainingBet'],
         where: { trainingBet: { id: trainingBetId } },
       });

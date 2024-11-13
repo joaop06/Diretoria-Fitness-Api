@@ -18,7 +18,10 @@ export class BetDaysEntity {
   id: number;
 
   @Column()
-  nameDay: string;
+  day: string;
+
+  @Column()
+  name: string;
 
   @Column({ default: 0 })
   totalFaults: number;
