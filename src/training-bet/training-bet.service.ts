@@ -1,17 +1,23 @@
 import * as moment from 'moment';
 import { Repository } from 'typeorm';
+import { Cron } from '@nestjs/schedule';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { TrainingBetEntity } from './training-bet.entity';
-import { CreateTrainingBetDto } from './dto/create-training-bet.dto';
 import { FindOptionsDto, FindReturnModelDto } from 'dto/find.dto';
+import { CreateTrainingBetDto } from './dto/create-training-bet.dto';
 
 @Injectable()
 export class TrainingBetService {
   constructor(
     @InjectRepository(TrainingBetEntity)
     private trainingBetRepository: Repository<TrainingBetEntity>,
-  ) {}
+  ) { }
+
+  @Cron('* */1 * * *')
+  testCron() {
+    console.log(`Rodando job em TrainingBetService a cada minuto: ${moment().format('DD/MM/YY HH:mm:ss')}`);
+  }
 
   async create(object: CreateTrainingBetDto): Promise<TrainingBetEntity> {
     try {

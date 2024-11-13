@@ -1,13 +1,13 @@
 import {
   Column,
   Entity,
+  OneToMany,
   ManyToOne,
   JoinColumn,
   CreateDateColumn,
   DeleteDateColumn,
   UpdateDateColumn,
   PrimaryGeneratedColumn,
-  OneToMany,
 } from 'typeorm';
 import { UsersEntity } from 'src/users/users.entity';
 import { TrainingBetEntity } from 'src/training-bet/training-bet.entity';

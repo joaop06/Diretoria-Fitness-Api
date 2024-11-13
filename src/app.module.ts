@@ -7,6 +7,7 @@ import { AppService } from './app.service';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
+import { ScheduleModule } from '@nestjs/schedule';
 import { ServeStaticModule } from '@nestjs/serve-static';
 
 import { UsersModule } from './users/users.module';
@@ -34,6 +35,7 @@ import { TrainingReleasesModule } from './training-releases/training-releases.mo
       entities: [__dirname + '/**/*.entity{.ts,.js}'],
       synchronize: process.env.NODE_ENV !== 'production',
     }),
+    ScheduleModule.forRoot(),
     ConfigModule.forRoot({ isGlobal: true, envFilePath: '.env' }),
     ServeStaticModule.forRoot({
       serveRoot: '/uploads', // Prefixo da URL
@@ -41,4 +43,4 @@ import { TrainingReleasesModule } from './training-releases/training-releases.mo
     }),
   ],
 })
-export class AppModule {}
+export class AppModule { }
