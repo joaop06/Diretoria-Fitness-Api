@@ -3,7 +3,6 @@ import { Injectable } from '@nestjs/common';
 import { BetDaysEntity } from './bet-days.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CreateBetDayDto } from './dto/create-bet-day.dto';
-import { FindOptionsDto, FindReturnModelDto } from 'dto/find.dto';
 
 @Injectable()
 export class BetDaysService {
@@ -11,15 +10,6 @@ export class BetDaysService {
     @InjectRepository(BetDaysEntity)
     private betDaysRepository: Repository<BetDaysEntity>,
   ) {}
-
-  async create(object: CreateBetDayDto): Promise<BetDaysEntity> {
-    try {
-      const newBetDay = this.betDaysRepository.create(object);
-      return await this.betDaysRepository.save(newBetDay);
-    } catch (e) {
-      throw e;
-    }
-  }
 
   async bulkCreate(days: CreateBetDayDto[]) {
     try {
@@ -38,26 +28,23 @@ export class BetDaysService {
     }
   }
 
-  async delete(id: number): Promise<any> {
+  async bulkDelete(ids: number[]): Promise<any> {
     try {
-      return await this.betDaysRepository.softDelete(id);
+      for (const id of ids) await this.betDaysRepository.softDelete(id);
+      return;
     } catch (e) {
       throw e;
     }
   }
 
-  async findOne(id: number): Promise<BetDaysEntity> {
+  async findAllByTrainingBetId(trainingBetId: number) {
     try {
-      return await this.betDaysRepository.findOne({ where: { id } });
+      return await this.betDaysRepository.find({
+        relations: ['trainingBet'],
+        where: { trainingBet: { id: trainingBetId } },
+      });
     } catch (e) {
       throw e;
     }
-  }
-
-  async findAll(
-    options: FindOptionsDto<BetDaysEntity>,
-  ): Promise<FindReturnModelDto<BetDaysEntity>> {
-    const [rows, count] = await this.betDaysRepository.findAndCount(options);
-    return { rows, count };
   }
 }

@@ -23,7 +23,7 @@ export class TrainingBetService {
     );
   }
 
-  async #periodConflict(object: Partial<CreateTrainingBetDto>) {
+  async #validatePeriodConflict(object: Partial<CreateTrainingBetDto>) {
     const conflict = await this.trainingBetRepository
       .createQueryBuilder('training_bet')
       .where('training_bet.initialDate < :finalDate', {
@@ -41,7 +41,7 @@ export class TrainingBetService {
     }
   }
 
-  #betStarted(initialDate: Date | string) {
+  #validateBetStarted(initialDate: Date | string) {
     const today = moment().startOf('day');
     const initialDateMoment = moment(initialDate).startOf('day');
     if (
@@ -60,25 +60,42 @@ export class TrainingBetService {
     return { ...object, duration };
   }
 
-  async #createBetDays(
+  async #syncBetDays(
     trainingBetId: number,
     duration: number,
     initialDate: Date | string,
   ) {
+    const existingBetDays =
+      await this.betDaysService.findAllByTrainingBetId(trainingBetId);
+    const currentCount = existingBetDays.length;
+
     const betDays = [];
-    for (let i = 0; i < duration; i++) {
-      const currentDay = moment(initialDate).locale('pt-br').add(i, 'days');
+    if (duration > currentCount) {
+      /**
+       * Se a nova duração é maior que a quantidade atual de dias
+       */
+      for (let i = currentCount; i < duration; i++) {
+        const currentDay = moment(initialDate).locale('pt-br').add(i, 'days');
 
-      const name = currentDay.format('ddd');
-      const formatedName = name[0].toUpperCase() + name.slice(1);
+        const name = currentDay.format('ddd');
+        const formatedName = name[0].toUpperCase() + name.slice(1);
 
-      betDays.push({
-        trainingBetId: trainingBetId,
-        nameDay: `${formatedName} ${currentDay.format('DD/MM')}`,
-      });
+        betDays.push({
+          trainingBetId: trainingBetId,
+          nameDay: `${formatedName} ${currentDay.format('DD/MM')}`,
+        });
+      }
+
+      await this.betDaysService.bulkCreate(betDays);
+    } else if (duration < currentCount) {
+      /**
+       * Deleta os dias sobressalentes a nova duração da aposta
+       */
+      const idsToRemove = existingBetDays
+        .slice(duration)
+        .map((betDay) => betDay.id);
+      await this.betDaysService.bulkDelete(idsToRemove);
     }
-
-    await this.betDaysService.bulkCreate(betDays);
   }
 
   async create(object: CreateTrainingBetDto): Promise<TrainingBetEntity> {
@@ -88,16 +105,16 @@ export class TrainingBetService {
       }
 
       // Valida se há conflito das datas
-      await this.#periodConflict(object);
+      await this.#validatePeriodConflict(object);
 
       // Valida se a aposta já foi iniciada
-      this.#betStarted(object.initialDate);
+      this.#validateBetStarted(object.initialDate);
 
       const newObject = this.#defineDuration(object);
       const newTrainingBet = this.trainingBetRepository.create(newObject);
       const result = await this.trainingBetRepository.save(newTrainingBet);
 
-      await this.#createBetDays(result.id, object.duration, object.initialDate);
+      await this.#syncBetDays(result.id, object.duration, object.initialDate);
 
       return result;
     } catch (e) {
@@ -116,18 +133,22 @@ export class TrainingBetService {
         initialDate: object.initialDate ?? trainingBet.initialDate,
       };
 
-      await this.#periodConflict(newTrainingBet);
+      // Valida se há conflito das datas
+      await this.#validatePeriodConflict(newTrainingBet);
 
       // Valida se a aposta já foi iniciada
-      if (object.initialDate) this.#betStarted(object.initialDate);
+      if (object.initialDate) this.#validateBetStarted(object.initialDate);
 
       newTrainingBet = this.#defineDuration(newTrainingBet);
+      const result = await this.trainingBetRepository.update(id, object);
 
-      /**
-       * TODO: Atualizar, Deletar ou Inserir dias da aposta baseado no período atualizado
-       */
+      await this.#syncBetDays(
+        id,
+        newTrainingBet.duration,
+        newTrainingBet.initialDate,
+      );
 
-      return await this.trainingBetRepository.update(id, object);
+      return result;
     } catch (e) {
       throw e;
     }
