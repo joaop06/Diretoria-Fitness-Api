@@ -3,11 +3,19 @@ import { ParticipantsEntity } from './participants.entity';
 import { ParticipantsService } from './participants.service';
 import { FindOptionsDto, FindReturnModelDto } from 'dto/find.dto';
 import { CreateParticipantDto } from './dto/create-participant.dto';
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
+} from '@nestjs/common';
 
 @Controller('participants')
 export class ParticipantsController {
-  constructor(private readonly participantsService: ParticipantsService) { }
+  constructor(private readonly participantsService: ParticipantsService) {}
 
   @Post()
   async create(
@@ -29,18 +37,6 @@ export class ParticipantsController {
       return await this.participantsService.update(+id, object);
     } catch (e) {
       throw new Error(`Falha ao atualizar lançamento: ${e.message}`);
-    }
-  }
-
-  @Delete(':id')
-  async delete(@Param('id') id: string): Promise<any> {
-    try {
-      return await this.participantsService.delete(+id);
-    } catch (e) {
-      new Exception({
-        ...e,
-        message: `Falha ao deletar lançamento: ${e.message}`,
-      });
     }
   }
 

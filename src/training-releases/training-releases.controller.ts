@@ -13,8 +13,6 @@ import {
   Post,
   Query,
   Param,
-  Patch,
-  Delete,
   Controller,
   UploadedFile,
   UseInterceptors,
@@ -47,30 +45,6 @@ export class TrainingReleasesController {
       return await this.trainingReleasesService.create(object);
     } catch (e) {
       throw new Error(`Falha ao inserir lançamento: ${e.message}`);
-    }
-  }
-
-  @Patch(':id')
-  async update(
-    @Param('id') id: string,
-    @Body() object: Partial<TrainingReleasesEntity>,
-  ): Promise<any> {
-    try {
-      return await this.trainingReleasesService.update(+id, object);
-    } catch (e) {
-      throw new Error(`Falha ao atualizar lançamento: ${e.message}`);
-    }
-  }
-
-  @Delete(':id')
-  async delete(@Param('id') id: string): Promise<any> {
-    try {
-      return await this.trainingReleasesService.delete(+id);
-    } catch (e) {
-      new Exception({
-        ...e,
-        message: `Falha ao deletar lançamento: ${e.message}`,
-      });
     }
   }
 

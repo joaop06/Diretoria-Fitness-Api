@@ -16,24 +16,8 @@ export class TrainingReleasesService {
     object: CreateTrainingReleasesDto,
   ): Promise<TrainingReleasesEntity> {
     try {
-      const newTrainingBet = await this.trainingBetRepository.create(object);
+      const newTrainingBet = this.trainingBetRepository.create(object);
       return await this.trainingBetRepository.save(newTrainingBet);
-    } catch (e) {
-      throw e;
-    }
-  }
-
-  async update(id: number, object: Partial<TrainingReleasesEntity>) {
-    try {
-      return await this.trainingBetRepository.update(id, object);
-    } catch (e) {
-      throw e;
-    }
-  }
-
-  async delete(id: number): Promise<any> {
-    try {
-      return await this.trainingBetRepository.softDelete(id);
     } catch (e) {
       throw e;
     }
@@ -50,8 +34,12 @@ export class TrainingReleasesService {
   async findAll(
     options: FindOptionsDto<TrainingReleasesEntity>,
   ): Promise<FindReturnModelDto<TrainingReleasesEntity>> {
-    const [rows, count] =
-      await this.trainingBetRepository.findAndCount(options);
-    return { rows, count };
+    try {
+      const [rows, count] =
+        await this.trainingBetRepository.findAndCount(options);
+      return { rows, count };
+    } catch (e) {
+      throw e;
+    }
   }
 }

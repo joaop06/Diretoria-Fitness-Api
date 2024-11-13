@@ -23,7 +23,7 @@ export class BetDaysEntity {
   @Column({ default: 0 })
   totalFaults: number;
 
-  @Column()
+  @Column({ default: 0 })
   utilization: number;
 
   @ManyToOne(() => TrainingBetEntity, (trainingBet) => trainingBet.betDays)

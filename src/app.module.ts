@@ -43,4 +43,4 @@ import { TrainingReleasesModule } from './training-releases/training-releases.mo
     }),
   ],
 })
-export class AppModule { }
+export class AppModule {}

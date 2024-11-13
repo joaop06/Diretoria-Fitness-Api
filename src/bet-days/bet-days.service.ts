@@ -14,8 +14,17 @@ export class BetDaysService {
 
   async create(object: CreateBetDayDto): Promise<BetDaysEntity> {
     try {
-      const newBetDay = await this.betDaysRepository.create(object);
+      const newBetDay = this.betDaysRepository.create(object);
       return await this.betDaysRepository.save(newBetDay);
+    } catch (e) {
+      throw e;
+    }
+  }
+
+  async bulkCreate(days: CreateBetDayDto[]) {
+    try {
+      const betDays = days.map((day) => this.betDaysRepository.create(day));
+      return await this.betDaysRepository.save(betDays);
     } catch (e) {
       throw e;
     }

@@ -48,4 +48,8 @@ export class UsersController {
       throw { ...e, message };
     }
   }
+
+  async login() {
+    return 'login';
+  }
 }

@@ -11,7 +11,11 @@ import { TrainingBetEntity } from 'src/training-bet/training-bet.entity';
   providers: [ParticipantsService],
   controllers: [ParticipantsController],
   imports: [
-    TypeOrmModule.forFeature([ParticipantsEntity, UsersEntity, TrainingBetEntity]),
+    TypeOrmModule.forFeature([
+      ParticipantsEntity,
+      UsersEntity,
+      TrainingBetEntity,
+    ]),
   ],
 })
-export class ParticipantsModule { }
+export class ParticipantsModule {}
