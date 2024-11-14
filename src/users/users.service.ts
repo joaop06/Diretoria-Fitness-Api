@@ -4,13 +4,14 @@ import { UsersEntity } from './users.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CreateUserDto } from './dto/create-user.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
 
 @Injectable()
 export class UsersService {
   constructor(
     @InjectRepository(UsersEntity)
     private usersRepository: Repository<UsersEntity>,
-  ) {}
+  ) { }
 
   async create(object: CreateUserDto): Promise<UsersEntity> {
     try {
@@ -21,7 +22,7 @@ export class UsersService {
     }
   }
 
-  async update(id: number, object: Partial<UsersEntity>) {
+  async update(id: number, object: UpdateUserDto) {
     try {
       return await this.usersRepository.update(id, object);
     } catch (e) {

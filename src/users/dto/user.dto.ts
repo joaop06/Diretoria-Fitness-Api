@@ -1,4 +1,4 @@
-import { IsNumber, IsString, IsDateString } from 'class-validator';
+import { IsNumber, IsString, IsDateString, IsDecimal } from 'class-validator';
 
 export class UserDto {
   @IsNumber()
@@ -13,8 +13,11 @@ export class UserDto {
   @IsString()
   password?: string;
 
-  @IsString()
-  role?: string;
+  @IsDecimal()
+  weight: number;
+
+  @IsDecimal()
+  height: number;
 
   @IsDateString()
   createdAt: Date;

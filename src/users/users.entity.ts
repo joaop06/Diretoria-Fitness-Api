@@ -23,8 +23,11 @@ export class UsersEntity {
   @Column()
   password: string;
 
-  @Column()
-  role: string;
+  @Column({ default: 0.00 })
+  weight: number;
+
+  @Column({ default: 0.00 })
+  height: number;
 
   @OneToMany(() => ParticipantsEntity, (participant) => participant.user)
   participants: ParticipantsEntity[];

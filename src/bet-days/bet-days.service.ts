@@ -9,7 +9,7 @@ export class BetDaysService {
   constructor(
     @InjectRepository(BetDaysEntity)
     private betDaysRepository: Repository<BetDaysEntity>,
-  ) {}
+  ) { }
 
   async bulkCreate(allBetDays: CreateBetDayDto[]) {
     try {
@@ -51,6 +51,14 @@ export class BetDaysService {
     try {
       for (const id of ids) await this.betDaysRepository.softDelete(id);
       return;
+    } catch (e) {
+      throw e;
+    }
+  }
+
+  async findOne(id: number) {
+    try {
+      return await this.betDaysRepository.findOne({ where: { id } });
     } catch (e) {
       throw e;
     }

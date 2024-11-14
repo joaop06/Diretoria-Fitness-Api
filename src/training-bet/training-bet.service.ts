@@ -4,17 +4,19 @@ import { Cron } from '@nestjs/schedule';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { TrainingBetEntity } from './training-bet.entity';
+import { BetDaysService } from 'src/bet-days/bet-days.service';
 import { FindOptionsDto, FindReturnModelDto } from 'dto/find.dto';
 import { CreateTrainingBetDto } from './dto/create-training-bet.dto';
-import { BetDaysService } from 'src/bet-days/bet-days.service';
+import { ParticipantsService } from 'src/participants/participants.service';
 
 @Injectable()
 export class TrainingBetService {
   constructor(
     @InjectRepository(TrainingBetEntity)
     private trainingBetRepository: Repository<TrainingBetEntity>,
+    private participantsService: ParticipantsService,
     private betDaysService: BetDaysService,
-  ) {}
+  ) { }
 
   @Cron('* */1 * * *')
   testCron() {
@@ -188,7 +190,9 @@ export class TrainingBetService {
 
   async delete(id: number): Promise<any> {
     try {
-      return await this.trainingBetRepository.softDelete(id);
+      const result = await this.trainingBetRepository.delete(id);
+
+      return result;
     } catch (e) {
       throw e;
     }
