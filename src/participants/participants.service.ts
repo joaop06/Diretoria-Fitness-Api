@@ -23,15 +23,24 @@ export class ParticipantsService {
 
   async create(object: CreateParticipantDto): Promise<ParticipantsEntity> {
     try {
-      const user = await this.usersRepository.findOne({
-        where: { id: object.userId },
-      });
-      const trainingBet = await this.trainingBetRepository.findOne({
-        where: { id: object.trainingBetId },
-      });
-      if (!user || !trainingBet)
-        throw new Error(`Usuário ou Aposta não encontrada`);
+      const { userId, trainingBetId } = object;
 
+      // Busca do usuário para participação
+      const user = await this.usersRepository.findOne({
+        where: { id: userId },
+      });
+      if (!user) throw new Error(`Usuário não encontrado`);
+
+      // Busca da aposta
+      const trainingBet = await this.trainingBetRepository.findOne({
+        where: { id: trainingBetId },
+      });
+      if (!trainingBet) throw new Error(`Aposta não encontrada`);
+
+      /**
+       * Validação de início da aposta
+       * para não incluir participante em aposta em andamento
+       */
       const today = moment();
       const initialDate = moment(trainingBet.initialDate);
       if (today.isAfter(initialDate)) {
@@ -39,17 +48,12 @@ export class ParticipantsService {
       }
 
       const foundParticipant = await this.participantsRepository.findOne({
-        where: {
-          user: { id: user.id },
-          trainingBet: { id: trainingBet.id },
-        },
         relations: ['user', 'trainingBet'],
+        where: { user: { id: user.id }, trainingBet: { id: trainingBet.id } },
       });
       if (foundParticipant) {
-        const error = new Error(
-          `${user.name} já está participando desta aposta`,
-        );
-        throw Object.assign(error, { statusCode: 409 });
+        const errorMessage = `${user.name} já é participante da aposta`;
+        throw Object.assign(new Error(errorMessage), { statusCode: 409 });
       }
 
       const newParticipant = this.participantsRepository.create({

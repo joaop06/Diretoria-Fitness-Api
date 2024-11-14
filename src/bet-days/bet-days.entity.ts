@@ -29,7 +29,9 @@ export class BetDaysEntity {
   @Column({ default: 0 })
   utilization: number;
 
-  @ManyToOne(() => TrainingBetEntity, (trainingBet) => trainingBet.betDays)
+  @ManyToOne(() => TrainingBetEntity, (trainingBet) => trainingBet.betDays, {
+    onDelete: 'CASCADE',
+  })
   @JoinColumn({ name: 'trainingBetId' })
   trainingBet: TrainingBetEntity;
 

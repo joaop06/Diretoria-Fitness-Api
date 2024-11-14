@@ -10,6 +10,10 @@ import { ParticipantsModule } from 'src/participants/participants.module';
   exports: [TrainingBetService],
   providers: [TrainingBetService],
   controllers: [TrainingBetController],
-  imports: [TypeOrmModule.forFeature([TrainingBetEntity]), BetDaysModule, ParticipantsModule],
+  imports: [
+    TypeOrmModule.forFeature([TrainingBetEntity]),
+    BetDaysModule,
+    ParticipantsModule,
+  ],
 })
-export class TrainingBetModule { }
+export class TrainingBetModule {}

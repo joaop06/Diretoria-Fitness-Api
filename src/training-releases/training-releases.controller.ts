@@ -17,6 +17,7 @@ import {
   UploadedFile,
   UseInterceptors,
 } from '@nestjs/common';
+import { UploadTrainingFile } from './dto/upload-training-file.dto';
 
 @Controller('training-releases')
 export class TrainingReleasesController {
@@ -25,6 +26,17 @@ export class TrainingReleasesController {
   ) {}
 
   @Post()
+  async create(
+    @Body() object: CreateTrainingReleasesDto,
+  ): Promise<TrainingReleasesEntity> {
+    try {
+      return await this.trainingReleasesService.create(object);
+    } catch (e) {
+      new Exception(`Falha ao inserir lançamento: ${e.message}`);
+    }
+  }
+
+  @Post('photo/:id')
   @UseInterceptors(
     FileInterceptor('file', {
       storage: diskStorage({
@@ -36,15 +48,19 @@ export class TrainingReleasesController {
       }),
     }),
   )
-  async create(
+  async uploadTrainingPhoto(
     @UploadedFile() file: Express.Multer.File,
-    @Body() object: CreateTrainingReleasesDto,
-  ): Promise<TrainingReleasesEntity> {
+    @Param('id') id: string,
+    @Body() object: UploadTrainingFile,
+  ) {
     try {
       object.imagePath = file.path;
-      return await this.trainingReleasesService.create(object);
+      return await this.trainingReleasesService.uploadTrainingPhoto(
+        +id,
+        object,
+      );
     } catch (e) {
-      throw new Error(`Falha ao inserir lançamento: ${e.message}`);
+      new Exception(`Falha ao inserir foto do treino: ${e.message}`);
     }
   }
 

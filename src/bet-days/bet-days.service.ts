@@ -9,7 +9,7 @@ export class BetDaysService {
   constructor(
     @InjectRepository(BetDaysEntity)
     private betDaysRepository: Repository<BetDaysEntity>,
-  ) { }
+  ) {}
 
   async bulkCreate(allBetDays: CreateBetDayDto[]) {
     try {
@@ -49,7 +49,7 @@ export class BetDaysService {
 
   async bulkDelete(ids: number[]): Promise<any> {
     try {
-      for (const id of ids) await this.betDaysRepository.softDelete(id);
+      for (const id of ids) await this.betDaysRepository.delete(id);
       return;
     } catch (e) {
       throw e;

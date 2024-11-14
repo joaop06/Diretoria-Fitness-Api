@@ -6,14 +6,14 @@ export class CreateTrainingReleasesDto {
   participantId: number;
 
   @IsNumber()
-  @IsNotEmpty()
+  @IsNotEmpty({ message: 'Dia de treino não informado' })
   betDayId: number;
+
+  @IsString()
+  @IsNotEmpty({ message: 'Tipo de treino não informado' })
+  trainingType: string;
 
   @IsString()
   @IsOptional()
   comment?: string;
-
-  @IsString()
-  @IsOptional()
-  imagePath: string;
 }

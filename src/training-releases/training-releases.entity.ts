@@ -16,11 +16,25 @@ export class TrainingReleasesEntity {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column()
-  imagePath: string;
+  @Column({
+    type: 'enum',
+    enum: [
+      'Musculação',
+      'Corrida',
+      'Caminhada',
+      'Luta',
+      'Natação',
+      'Ciclismo',
+      'Outros',
+    ],
+  })
+  trainingType: string;
 
   @Column()
   comment: string;
+
+  @Column()
+  imagePath: string;
 
   @ManyToOne(
     () => ParticipantsEntity,
@@ -29,7 +43,9 @@ export class TrainingReleasesEntity {
   @JoinColumn({ name: 'participantId' })
   participant: ParticipantsEntity;
 
-  @ManyToOne(() => BetDaysEntity, (betDay) => betDay.trainingReleases)
+  @ManyToOne(() => BetDaysEntity, (betDay) => betDay.trainingReleases, {
+    onDelete: 'CASCADE',
+  })
   @JoinColumn({ name: 'betDayId' })
   betDay: BetDaysEntity;
 

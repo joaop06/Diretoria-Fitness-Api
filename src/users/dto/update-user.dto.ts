@@ -1,19 +1,19 @@
 import { IsString, IsOptional, IsDecimal } from 'class-validator';
 
 export class UpdateUserDto {
-    @IsString()
-    @IsOptional()
-    name?: string;
+  @IsString()
+  @IsOptional()
+  name?: string;
 
-    @IsString()
-    @IsOptional()
-    email?: string;
+  @IsString()
+  @IsOptional()
+  email?: string;
 
-    @IsDecimal()
-    @IsOptional()
-    weight?: number;
+  @IsDecimal()
+  @IsOptional()
+  weight?: number;
 
-    @IsDecimal()
-    @IsOptional()
-    height?: number;
+  @IsDecimal()
+  @IsOptional()
+  height?: number;
 }

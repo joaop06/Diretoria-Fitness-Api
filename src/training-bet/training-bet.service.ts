@@ -1,12 +1,14 @@
 import * as moment from 'moment';
 import { Repository } from 'typeorm';
-import { Cron } from '@nestjs/schedule';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { Cron, CronExpression } from '@nestjs/schedule';
 import { TrainingBetEntity } from './training-bet.entity';
+import { BetDaysEntity } from 'src/bet-days/bet-days.entity';
 import { BetDaysService } from 'src/bet-days/bet-days.service';
 import { FindOptionsDto, FindReturnModelDto } from 'dto/find.dto';
 import { CreateTrainingBetDto } from './dto/create-training-bet.dto';
+import { ParticipantsEntity } from 'src/participants/participants.entity';
 import { ParticipantsService } from 'src/participants/participants.service';
 
 @Injectable()
@@ -14,12 +16,119 @@ export class TrainingBetService {
   constructor(
     @InjectRepository(TrainingBetEntity)
     private trainingBetRepository: Repository<TrainingBetEntity>,
-    private participantsService: ParticipantsService,
     private betDaysService: BetDaysService,
-  ) { }
+    private participantsService: ParticipantsService,
+  ) {}
 
-  @Cron('* */1 * * *')
-  testCron() {
+  // @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
+  @Cron(CronExpression.EVERY_MINUTE)
+  async updateStatistics(id?: number) {
+    /**
+     * Buscar dias da aposta
+     *
+     * Para cada dia concluído (dias anteriores) da aposta,
+     * Verificar se o participante possui treino:
+     *  - Atualizar participante com a quantidade de faltas
+     *      - Se faltas > permitidas, está desclassificado
+     *
+     *  - Atualizar Dia da aposta com a quantidade de faltas total dos participantes e o aproveitamento (% de participantes que treinou)
+     *
+     *
+     * Se a quantidade de dias concluídos for igual a duração, a aposta está completa
+     */
+    const trainingBets: TrainingBetEntity[] = [];
+    if (id) {
+      const trainingBet = await this.findOne(id);
+      trainingBets.push(trainingBet);
+    } else {
+      const bets = await this.trainingBetRepository.find({
+        where: { completed: false },
+        relations: [
+          'betDays',
+          'betDays.trainingReleases',
+          'participants',
+          'participants.trainingReleases',
+          'participants.trainingReleases.betDays',
+        ],
+      });
+      trainingBets.push(...bets);
+    }
+
+    const today = moment();
+    for (const trainingBet of trainingBets) {
+      const { duration, betDays, participants } = trainingBet;
+      const betDaysComplete = betDays.filter(
+        (betDay) =>
+          today.isAfter(betDay.day) &&
+          today.format('DD') !== moment(betDay.day).format('DD'),
+      );
+
+      const betDaysFaults: Partial<BetDaysEntity>[] = [];
+      const participantsFaults: Partial<ParticipantsEntity>[] = [];
+
+      betDaysComplete.forEach((betDay) => {
+        /** Verifica os participantes que não treinaram */
+        participants.forEach((participant) => {
+          // Busca nos treinos pelo participante e o dia atual
+          const participantTraining = participant?.trainingReleases?.find(
+            (item) => item.betDay.id === betDay.id,
+          );
+
+          /** Se o participante não treinou */
+          if (!participantTraining) {
+            // adiciona uma falha para o participante
+            const participantFault = participantsFaults.find(
+              (item) => item.id === participant.id,
+            );
+
+            if (participantFault) participantFault.faults += 1;
+            else participantsFaults.push({ id: participant.id, faults: 1 });
+
+            // adiciona uma falha ao total do dia
+            const betDayFault = betDaysFaults.find(
+              (item) => item.id === betDay.id,
+            );
+
+            if (betDayFault) betDayFault.totalFaults += 1;
+            else betDaysFaults.push({ id: betDay.id, totalFaults: 1 });
+          }
+        });
+      });
+
+      /** Atualiza as faltas dos participantes */
+      for (const participant of participantsFaults) {
+        // Desclassificado caso exceder a quantidade de faltas permitidas
+        if (participant.faults >= duration) participant.declassified = true;
+
+        // Calcula o aproveitamento em percentual
+        participant.utilization = parseFloat(
+          (
+            (betDaysComplete.length /
+              (betDaysComplete.length + participant.faults)) *
+            100
+          ).toFixed(2),
+        );
+
+        await this.participantsService.update(participant.id, participant);
+      }
+
+      /** Atualiza as faltas totais dos dias */
+      for (const betDay of betDaysFaults) {
+        // Calcula o aproveitamento em percentual
+        betDay.utilization = parseFloat(
+          (
+            (participants.length / (participants.length + betDay.totalFaults)) *
+            100
+          ).toFixed(2),
+        );
+
+        await this.betDaysService.update(betDay.id, betDay);
+      }
+
+      const completed = betDays.length === betDaysComplete.length;
+      await this.trainingBetRepository.update(trainingBet.id, { completed });
+    }
+
     console.log(
       `Rodando job em TrainingBetService a cada minuto: ${moment().format('DD/MM/YY HH:mm:ss')}`,
     );
@@ -84,48 +193,61 @@ export class TrainingBetService {
     initialDate: Date | string,
   ) {
     const trainingBet = await this.findOne(trainingBetId);
-
     const existingBetDays =
       await this.betDaysService.findAllByTrainingBetId(trainingBetId);
-    const currentCount = existingBetDays.length;
 
     const betDays = [];
+    const currentCount = existingBetDays.length;
     for (let i = 0; i < duration; i++) {
       const currentDay = moment(initialDate).locale('pt-br').add(i, 'days');
 
-      const name = currentDay.format('ddd');
-      const formatedName = name[0].toUpperCase() + name.slice(1);
+      const day = currentDay.format('YYYY-MM-DD');
+      const unformattedName = currentDay.format('ddd');
+      const name = unformattedName[0].toUpperCase() + unformattedName.slice(1);
 
-      betDays.push({
-        trainingBet,
-        name: formatedName,
-        day: currentDay.format('YYYY-MM-DD'),
-      });
+      betDays.push({ day, name, trainingBet });
     }
 
-    if (duration > currentCount) {
+    const toCreate = [];
+    const toDelete = [];
+
+    /**
+     * Por mais que identifique a mesma quantidade de dias,
+     * se houver algum dia diferente, irá recalcular
+     */
+    const differentDays = betDays.some(
+      (betDay) =>
+        !existingBetDays.find((existDay) => existDay.day === betDay.day),
+    );
+
+    if (duration > currentCount || differentDays) {
       /**
        * Se a nova duração é maior que a quantidade atual de dias
        */
-      await this.betDaysService.bulkCreate(betDays);
-    } else if (duration < currentCount) {
+      toCreate.push(
+        ...betDays.filter(
+          (betDay) =>
+            !existingBetDays.some((existDay) => existDay.day === betDay.day),
+        ),
+      );
+    }
+
+    if (duration < currentCount || differentDays) {
       /**
        * Deleta os dias sobressalentes a nova duração da aposta
        */
-      const idsToRemove = existingBetDays
-        .filter(
-          (day) =>
-            !betDays.find(
-              (item) =>
-                item.day === day.day &&
-                item.name === day.name &&
-                item.trainingBet.id === day.trainingBet.id,
-            ),
-        )
-        .map((item) => item.id);
-
-      await this.betDaysService.bulkDelete(idsToRemove);
+      toDelete.push(
+        ...existingBetDays
+          .filter(
+            (existDay) =>
+              !betDays.some((betDay) => betDay.day === existDay.day),
+          )
+          .map((day) => day.id),
+      );
     }
+
+    if (toDelete.length) await this.betDaysService.bulkDelete(toDelete);
+    if (toCreate.length) await this.betDaysService.bulkCreate(toCreate);
   }
 
   async create(object: CreateTrainingBetDto): Promise<TrainingBetEntity> {
@@ -154,6 +276,17 @@ export class TrainingBetService {
 
   async update(id: number, object: Partial<TrainingBetEntity>) {
     try {
+      if (object.initialDate && object.finalDate) {
+        const { initialDate, finalDate } = object;
+        const initialIsAfterFinal = moment(initialDate).isAfter(
+          moment(finalDate),
+        );
+        if (initialIsAfterFinal)
+          throw new Error(
+            `Período inválido. Data inicial deve ser menor que a data final.`,
+          );
+      }
+
       // Valida se há conflito das datas
       const trainingBet = await this.findOne(id);
       if (!trainingBet) throw new Error('Aposta não encontrada');
@@ -200,7 +333,10 @@ export class TrainingBetService {
 
   async findOne(id: number): Promise<TrainingBetEntity> {
     try {
-      return await this.trainingBetRepository.findOne({ where: { id } });
+      return await this.trainingBetRepository.findOne({
+        where: { id },
+        relations: ['betDays', 'betDays.trainingReleases', 'participants'],
+      });
     } catch (e) {
       throw e;
     }
