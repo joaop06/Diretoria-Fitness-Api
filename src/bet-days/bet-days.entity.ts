@@ -26,7 +26,7 @@ export class BetDaysEntity {
   @Column({ default: 0 })
   totalFaults: number;
 
-  @Column({ default: 0 })
+  @Column({ type: 'decimal', default: 0.0 })
   utilization: number;
 
   @ManyToOne(() => TrainingBetEntity, (trainingBet) => trainingBet.betDays, {

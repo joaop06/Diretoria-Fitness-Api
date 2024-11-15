@@ -48,7 +48,7 @@ export class TrainingBetService {
           'betDays.trainingReleases',
           'participants',
           'participants.trainingReleases',
-          'participants.trainingReleases.betDays',
+          'participants.trainingReleases.betDay',
         ],
       });
       trainingBets.push(...bets);
@@ -56,7 +56,7 @@ export class TrainingBetService {
 
     const today = moment();
     for (const trainingBet of trainingBets) {
-      const { duration, betDays, participants } = trainingBet;
+      const { faultsAllowed, betDays, participants } = trainingBet;
       const betDaysComplete = betDays.filter(
         (betDay) =>
           today.isAfter(betDay.day) &&
@@ -67,6 +67,8 @@ export class TrainingBetService {
       const participantsFaults: Partial<ParticipantsEntity>[] = [];
 
       betDaysComplete.forEach((betDay) => {
+        betDaysFaults.push({ id: betDay.id, totalFaults: 0 });
+
         /** Verifica os participantes que não treinaram */
         participants.forEach((participant) => {
           // Busca nos treinos pelo participante e o dia atual
@@ -90,7 +92,6 @@ export class TrainingBetService {
             );
 
             if (betDayFault) betDayFault.totalFaults += 1;
-            else betDaysFaults.push({ id: betDay.id, totalFaults: 1 });
           }
         });
       });
@@ -98,15 +99,13 @@ export class TrainingBetService {
       /** Atualiza as faltas dos participantes */
       for (const participant of participantsFaults) {
         // Desclassificado caso exceder a quantidade de faltas permitidas
-        if (participant.faults >= duration) participant.declassified = true;
+        participant.declassified = participant.faults >= faultsAllowed;
 
         // Calcula o aproveitamento em percentual
         participant.utilization = parseFloat(
-          (
-            (betDaysComplete.length /
-              (betDaysComplete.length + participant.faults)) *
-            100
-          ).toFixed(2),
+          (100 - (participant.faults / betDaysComplete.length) * 100).toFixed(
+            2,
+          ),
         );
 
         await this.participantsService.update(participant.id, participant);
@@ -115,12 +114,10 @@ export class TrainingBetService {
       /** Atualiza as faltas totais dos dias */
       for (const betDay of betDaysFaults) {
         // Calcula o aproveitamento em percentual
-        betDay.utilization = parseFloat(
-          (
-            (participants.length / (participants.length + betDay.totalFaults)) *
-            100
-          ).toFixed(2),
+        const utilization = parseFloat(
+          (100 - (betDay.totalFaults / participants.length) * 100).toFixed(2),
         );
+        betDay.utilization = isNaN(utilization) ? 0 : utilization;
 
         await this.betDaysService.update(betDay.id, betDay);
       }

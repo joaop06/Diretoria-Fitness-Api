@@ -24,7 +24,7 @@ export class ParticipantsEntity {
   @Column({ default: false })
   declassified: boolean;
 
-  @Column({ default: 0 })
+  @Column({ type: 'decimal', default: 0.0 })
   utilization: number;
 
   @ManyToOne(() => UsersEntity, (user) => user.participants, {
