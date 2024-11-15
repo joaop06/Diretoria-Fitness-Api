@@ -1,9 +1,9 @@
 import { UsersEntity } from './users.entity';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { Body, Controller, Get, Param, Patch, Post, Put } from '@nestjs/common';
-import { UpdateUserDto } from './dto/update-user.dto';
 
 @Controller('users')
 export class UsersController {

@@ -9,9 +9,9 @@ import {
   UpdateDateColumn,
   PrimaryGeneratedColumn,
 } from 'typeorm';
-import { UsersEntity } from 'src/users/users.entity';
-import { TrainingBetEntity } from 'src/training-bet/training-bet.entity';
-import { TrainingReleasesEntity } from 'src/training-releases/training-releases.entity';
+import { UsersEntity } from '../users/users.entity';
+import { TrainingBetEntity } from '../training-bet/training-bet.entity';
+import { TrainingReleasesEntity } from '../training-releases/training-releases.entity';
 
 @Entity('participants')
 export class ParticipantsEntity {

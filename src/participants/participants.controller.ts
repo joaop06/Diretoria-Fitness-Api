@@ -1,8 +1,8 @@
-import { Exception } from 'interceptors/exception.filter';
 import { ParticipantsEntity } from './participants.entity';
 import { ParticipantsService } from './participants.service';
-import { FindOptionsDto, FindReturnModelDto } from 'dto/find.dto';
+import { Exception } from '../../interceptors/exception.filter';
 import { CreateParticipantDto } from './dto/create-participant.dto';
+import { FindOptionsDto, FindReturnModelDto } from '../../dto/find.dto';
 import {
   Body,
   Controller,

@@ -1,15 +1,15 @@
 import * as moment from 'moment';
 import { Repository } from 'typeorm';
+import { Cron } from '@nestjs/schedule';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Cron, CronExpression } from '@nestjs/schedule';
 import { TrainingBetEntity } from './training-bet.entity';
-import { BetDaysEntity } from 'src/bet-days/bet-days.entity';
-import { BetDaysService } from 'src/bet-days/bet-days.service';
-import { FindOptionsDto, FindReturnModelDto } from 'dto/find.dto';
+import { BetDaysEntity } from '../bet-days/bet-days.entity';
+import { BetDaysService } from '../bet-days/bet-days.service';
 import { CreateTrainingBetDto } from './dto/create-training-bet.dto';
-import { ParticipantsEntity } from 'src/participants/participants.entity';
-import { ParticipantsService } from 'src/participants/participants.service';
+import { FindOptionsDto, FindReturnModelDto } from '../../dto/find.dto';
+import { ParticipantsEntity } from '../participants/participants.entity';
+import { ParticipantsService } from '../participants/participants.service';
 
 @Injectable()
 export class TrainingBetService {
@@ -20,8 +20,7 @@ export class TrainingBetService {
     private participantsService: ParticipantsService,
   ) {}
 
-  // @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
-  @Cron(CronExpression.EVERY_MINUTE)
+  @Cron('1 0 * * *') // Executa todo dia às 00:01
   async updateStatistics(id?: number) {
     /**
      * Buscar dias da aposta

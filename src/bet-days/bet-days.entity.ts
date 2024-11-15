@@ -9,8 +9,8 @@ import {
   PrimaryGeneratedColumn,
   OneToMany,
 } from 'typeorm';
-import { TrainingBetEntity } from 'src/training-bet/training-bet.entity';
-import { TrainingReleasesEntity } from 'src/training-releases/training-releases.entity';
+import { TrainingBetEntity } from '../training-bet/training-bet.entity';
+import { TrainingReleasesEntity } from '../training-releases/training-releases.entity';
 
 @Entity('bet_days')
 export class BetDaysEntity {

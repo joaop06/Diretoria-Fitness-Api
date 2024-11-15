@@ -3,12 +3,12 @@ import * as moment from 'moment';
 import { Repository } from 'typeorm';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { BetDaysService } from 'src/bet-days/bet-days.service';
-import { FindOptionsDto, FindReturnModelDto } from 'dto/find.dto';
+import { BetDaysService } from '../bet-days/bet-days.service';
 import { TrainingReleasesEntity } from './training-releases.entity';
 import { UploadTrainingFile } from './dto/upload-training-file.dto';
-import { TrainingBetService } from 'src/training-bet/training-bet.service';
-import { ParticipantsService } from 'src/participants/participants.service';
+import { FindOptionsDto, FindReturnModelDto } from '../../dto/find.dto';
+import { TrainingBetService } from '../training-bet/training-bet.service';
+import { ParticipantsService } from '../participants/participants.service';
 import { CreateTrainingReleasesDto } from './dto/create-training-release.dto';
 
 @Injectable()

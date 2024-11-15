@@ -7,7 +7,7 @@ import {
   UpdateDateColumn,
   PrimaryGeneratedColumn,
 } from 'typeorm';
-import { ParticipantsEntity } from 'src/participants/participants.entity';
+import { ParticipantsEntity } from '../participants/participants.entity';
 
 @Entity('users')
 export class UsersEntity {

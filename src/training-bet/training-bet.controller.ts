@@ -1,8 +1,8 @@
-import { Exception } from 'interceptors/exception.filter';
 import { TrainingBetEntity } from './training-bet.entity';
 import { TrainingBetService } from './training-bet.service';
-import { FindOptionsDto, FindReturnModelDto } from 'dto/find.dto';
+import { Exception } from '../../interceptors/exception.filter';
 import { CreateTrainingBetDto } from './dto/create-training-bet.dto';
+import { FindOptionsDto, FindReturnModelDto } from '../../dto/find.dto';
 import {
   Body,
   Controller,

@@ -6,9 +6,9 @@
   "private": true,
   "license": "UNLICENSED",
   "scripts": {
-    "build": "nest build",
     "dev": "nest start --watch",
-    "start": "nest build && node dist/src/main.js",
+    "start": "node dist/src/main.js",
+    "build": "tsc -p tsconfig.build.json",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix && prettier --write \"src/**/*.ts\" \"test/**/*.ts\""
   },
   "dependencies": {
