@@ -3,13 +3,13 @@ import { Repository } from 'typeorm';
 import { Cron } from '@nestjs/schedule';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { TrainingBetEntity } from './training-bet.entity';
-import { BetDaysEntity } from '../bet-days/bet-days.entity';
 import { BetDaysService } from '../bet-days/bet-days.service';
+import { TrainingBetEntity } from './entities/training-bet.entity';
+import { BetDaysEntity } from '../bet-days/entities/bet-days.entity';
 import { CreateTrainingBetDto } from './dto/create-training-bet.dto';
-import { FindOptionsDto, FindReturnModelDto } from '../../dto/find.dto';
-import { ParticipantsEntity } from '../participants/participants.entity';
 import { ParticipantsService } from '../participants/participants.service';
+import { FindOptionsDto, FindReturnModelDto } from '../../public/dto/find.dto';
+import { ParticipantsEntity } from '../participants/entities/participants.entity';
 
 @Injectable()
 export class TrainingBetService {

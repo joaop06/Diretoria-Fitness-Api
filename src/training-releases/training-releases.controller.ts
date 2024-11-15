@@ -2,11 +2,11 @@ import * as path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 import { diskStorage } from 'multer';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { Exception } from '../../interceptors/exception.filter';
-import { TrainingReleasesEntity } from './training-releases.entity';
 import { TrainingReleasesService } from './training-releases.service';
-import { FindOptionsDto, FindReturnModelDto } from '../../dto/find.dto';
+import { Exception } from '../../public/interceptors/exception.filter';
+import { TrainingReleasesEntity } from './entities/training-releases.entity';
 import { CreateTrainingReleasesDto } from './dto/create-training-release.dto';
+import { FindOptionsDto, FindReturnModelDto } from '../../public/dto/find.dto';
 import {
   Get,
   Body,

@@ -4,12 +4,12 @@ import { Repository } from 'typeorm';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { BetDaysService } from '../bet-days/bet-days.service';
-import { TrainingReleasesEntity } from './training-releases.entity';
 import { UploadTrainingFile } from './dto/upload-training-file.dto';
-import { FindOptionsDto, FindReturnModelDto } from '../../dto/find.dto';
 import { TrainingBetService } from '../training-bet/training-bet.service';
 import { ParticipantsService } from '../participants/participants.service';
+import { TrainingReleasesEntity } from './entities/training-releases.entity';
 import { CreateTrainingReleasesDto } from './dto/create-training-release.dto';
+import { FindOptionsDto, FindReturnModelDto } from '../../public/dto/find.dto';
 
 @Injectable()
 export class TrainingReleasesService {

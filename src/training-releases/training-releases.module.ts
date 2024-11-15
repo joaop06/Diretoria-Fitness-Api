@@ -1,11 +1,11 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { BetDaysModule } from '../bet-days/bet-days.module';
-import { TrainingReleasesEntity } from './training-releases.entity';
 import { TrainingReleasesService } from './training-releases.service';
 import { TrainingBetModule } from '../training-bet/training-bet.module';
 import { ParticipantsModule } from '../participants/participants.module';
 import { TrainingReleasesController } from './training-releases.controller';
+import { TrainingReleasesEntity } from './entities/training-releases.entity';
 
 @Module({
   exports: [TrainingReleasesService],

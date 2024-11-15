@@ -8,8 +8,8 @@ import {
   UpdateDateColumn,
   PrimaryGeneratedColumn,
 } from 'typeorm';
-import { BetDaysEntity } from '../bet-days/bet-days.entity';
-import { ParticipantsEntity } from '../participants/participants.entity';
+import { BetDaysEntity } from '../../bet-days/entities/bet-days.entity';
+import { ParticipantsEntity } from '../../participants/entities/participants.entity';
 
 @Entity('training_releases')
 export class TrainingReleasesEntity {

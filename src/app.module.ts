@@ -10,6 +10,7 @@ import { AppController } from './app.controller';
 import { ScheduleModule } from '@nestjs/schedule';
 import { ServeStaticModule } from '@nestjs/serve-static';
 
+import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { BetDaysModule } from './bet-days/bet-days.module';
 import { TrainingBetModule } from './training-bet/training-bet.module';
@@ -41,6 +42,7 @@ import { TrainingReleasesModule } from './training-releases/training-releases.mo
       serveRoot: '/uploads', // Prefixo da URL
       rootPath: join(__dirname, '..', 'public/imagesReleases'), // Caminho da pasta de uploads
     }),
+    AuthModule,
   ],
 })
 export class AppModule {}

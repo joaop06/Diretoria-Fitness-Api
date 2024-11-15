@@ -1,7 +1,7 @@
 import { Repository } from 'typeorm';
 import { Injectable } from '@nestjs/common';
-import { BetDaysEntity } from './bet-days.entity';
 import { InjectRepository } from '@nestjs/typeorm';
+import { BetDaysEntity } from './entities/bet-days.entity';
 import { CreateBetDayDto } from './dto/create-bet-day.dto';
 
 @Injectable()

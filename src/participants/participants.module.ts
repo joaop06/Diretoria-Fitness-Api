@@ -1,10 +1,10 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { UsersEntity } from '../users/users.entity';
-import { ParticipantsEntity } from './participants.entity';
+import { UsersEntity } from '../users/entities/users.entity';
 import { ParticipantsService } from './participants.service';
 import { ParticipantsController } from './participants.controller';
-import { TrainingBetEntity } from '../training-bet/training-bet.entity';
+import { ParticipantsEntity } from './entities/participants.entity';
+import { TrainingBetEntity } from '../training-bet/entities/training-bet.entity';
 
 @Module({
   exports: [ParticipantsService],

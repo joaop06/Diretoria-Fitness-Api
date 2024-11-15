@@ -2,11 +2,11 @@ import * as moment from 'moment';
 import { Repository } from 'typeorm';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { UsersEntity } from '../users/users.entity';
-import { ParticipantsEntity } from './participants.entity';
+import { UsersEntity } from '../users/entities/users.entity';
+import { ParticipantsEntity } from './entities/participants.entity';
 import { CreateParticipantDto } from './dto/create-participant.dto';
-import { FindOptionsDto, FindReturnModelDto } from '../../dto/find.dto';
-import { TrainingBetEntity } from '../training-bet/training-bet.entity';
+import { FindOptionsDto, FindReturnModelDto } from '../../public/dto/find.dto';
+import { TrainingBetEntity } from '../training-bet/entities/training-bet.entity';
 
 @Injectable()
 export class ParticipantsService {

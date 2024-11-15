@@ -1,10 +1,12 @@
-import { Repository } from 'typeorm';
+import * as bcrypt from 'bcryptjs';
 import { Injectable } from '@nestjs/common';
-import { UsersEntity } from './users.entity';
 import { InjectRepository } from '@nestjs/typeorm';
+import { UsersEntity } from './entities/users.entity';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { QueryFailedError, Repository } from 'typeorm';
 import { ChangePasswordDto } from './dto/change-password.dto';
+import { Exception } from 'public/interceptors/exception.filter';
 
 @Injectable()
 export class UsersService {
@@ -15,10 +17,23 @@ export class UsersService {
 
   async create(object: CreateUserDto): Promise<UsersEntity> {
     try {
-      const newUser = this.usersRepository.create(object);
+      const password = await bcrypt.hash(object.password, 10);
+
+      const newUser = this.usersRepository.create({ ...object, password });
       return await this.usersRepository.save(newUser);
     } catch (e) {
-      throw e;
+      if (
+        e instanceof QueryFailedError &&
+        e.message.includes('Duplicate entry')
+      ) {
+        // Duplicidade de email
+        throw new Exception({
+          message: 'Este email já está em uso',
+          statusCode: 409,
+        });
+      } else {
+        throw e;
+      }
     }
   }
 
@@ -36,6 +51,10 @@ export class UsersService {
     } catch (e) {
       throw e;
     }
+  }
+
+  async findOneByEmail(email: string): Promise<UsersEntity> {
+    return await this.usersRepository.findOneBy({ email });
   }
 
   async changePassword(object: ChangePasswordDto): Promise<any> {
