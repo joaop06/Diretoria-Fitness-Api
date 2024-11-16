@@ -3,6 +3,7 @@ dotenv.config();
 
 import { join } from 'path';
 import { Module } from '@nestjs/common';
+import { APP_GUARD } from '@nestjs/core';
 import { AppService } from './app.service';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -12,14 +13,13 @@ import { ServeStaticModule } from '@nestjs/serve-static';
 
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
+import { JwtAuthGuard } from './auth/jwt/jwt-auth-guard';
 import { BetDaysModule } from './bet-days/bet-days.module';
 import { TrainingBetModule } from './training-bet/training-bet.module';
 import { ParticipantsModule } from './participants/participants.module';
 import { TrainingReleasesModule } from './training-releases/training-releases.module';
 
 @Module({
-  providers: [AppService],
-  controllers: [AppController],
   imports: [
     UsersModule,
     BetDaysModule,
@@ -44,5 +44,7 @@ import { TrainingReleasesModule } from './training-releases/training-releases.mo
     }),
     AuthModule,
   ],
+  controllers: [AppController],
+  providers: [AppService, { provide: APP_GUARD, useClass: JwtAuthGuard }],
 })
 export class AppModule {}
