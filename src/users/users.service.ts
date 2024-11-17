@@ -6,7 +6,7 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { QueryFailedError, Repository } from 'typeorm';
 import { ChangePasswordDto } from './dto/change-password.dto';
-import { Exception } from 'public/interceptors/exception.filter';
+import { Exception } from '../../public/interceptors/exception.filter';
 
 @Injectable()
 export class UsersService {
