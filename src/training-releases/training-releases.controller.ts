@@ -1,7 +1,10 @@
+import * as fs from 'fs';
 import * as path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 import { diskStorage } from 'multer';
+import { FileDto } from './dto/file.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { UploadTrainingFile } from './dto/upload-training-file.dto';
 import { TrainingReleasesService } from './training-releases.service';
 import { Exception } from '../../public/interceptors/exception.filter';
 import { TrainingReleasesEntity } from './entities/training-releases.entity';
@@ -17,7 +20,11 @@ import {
   UploadedFile,
   UseInterceptors,
 } from '@nestjs/common';
-import { UploadTrainingFile } from './dto/upload-training-file.dto';
+
+const uploadDir = path.join(__dirname, '../../public/imagesReleases');
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
 
 @Controller('training-releases')
 export class TrainingReleasesController {
@@ -40,7 +47,7 @@ export class TrainingReleasesController {
   @UseInterceptors(
     FileInterceptor('file', {
       storage: diskStorage({
-        destination: './public/imagesReleases',
+        destination: uploadDir,
         filename: (req, file, cb) => {
           const filename: string = uuidv4() + path.extname(file.originalname);
           cb(null, filename);
@@ -49,7 +56,7 @@ export class TrainingReleasesController {
     }),
   )
   async uploadTrainingPhoto(
-    @UploadedFile() file: Express.Multer.File,
+    @UploadedFile() file: FileDto,
     @Param('id') id: string,
     @Body() object: UploadTrainingFile,
   ) {

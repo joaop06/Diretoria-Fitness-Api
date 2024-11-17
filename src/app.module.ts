@@ -1,7 +1,6 @@
 import * as dotenv from 'dotenv';
 dotenv.config();
 
-import { join } from 'path';
 import { Module } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
 import { AppService } from './app.service';
@@ -40,7 +39,7 @@ import { TrainingReleasesModule } from './training-releases/training-releases.mo
     ConfigModule.forRoot({ isGlobal: true, envFilePath: '.env' }),
     ServeStaticModule.forRoot({
       serveRoot: '/uploads', // Prefixo da URL
-      rootPath: join(__dirname, '..', 'public/imagesReleases'), // Caminho da pasta de uploads
+      rootPath: '../public/imagesReleases', // Caminho da pasta de uploads
     }),
     AuthModule,
   ],

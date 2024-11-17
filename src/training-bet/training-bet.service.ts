@@ -125,9 +125,7 @@ export class TrainingBetService {
       await this.trainingBetRepository.update(trainingBet.id, { completed });
     }
 
-    console.log(
-      `Rodando job em TrainingBetService a cada minuto: ${moment().format('DD/MM/YY HH:mm:ss')}`,
-    );
+    console.log(`Estatísticas das Apostas atualizadas com sucesso!!`);
   }
 
   async #validatePeriodConflict(object: Partial<TrainingBetEntity>) {
