@@ -1,10 +1,10 @@
 import * as bcrypt from 'bcryptjs';
+import { Repository } from 'typeorm';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { UsersEntity } from './entities/users.entity';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { QueryFailedError, Repository } from 'typeorm';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { Exception } from '../../public/interceptors/exception.filter';
 
@@ -13,7 +13,7 @@ export class UsersService {
   constructor(
     @InjectRepository(UsersEntity)
     private usersRepository: Repository<UsersEntity>,
-  ) {}
+  ) { }
 
   async create(object: CreateUserDto): Promise<UsersEntity> {
     try {
@@ -22,15 +22,12 @@ export class UsersService {
       const newUser = this.usersRepository.create({ ...object, password });
       return await this.usersRepository.save(newUser);
     } catch (e) {
-      if (
-        e instanceof QueryFailedError &&
-        e.message.includes('Duplicate entry')
-      ) {
-        // Duplicidade de email
-        throw new Exception({
+      if (e.message.includes('Duplicate entry')) {
+        new Exception({
           message: 'Este email já está em uso',
           statusCode: 409,
         });
+
       } else {
         throw e;
       }

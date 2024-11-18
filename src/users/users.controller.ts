@@ -4,6 +4,7 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { Public } from '../../public/decorators/public.decorator';
+import { Exception } from '../../public/interceptors/exception.filter';
 import { Body, Controller, Get, Param, Patch, Post, Put } from '@nestjs/common';
 
 @Controller('users')
@@ -16,7 +17,7 @@ export class UsersController {
     try {
       return await this.usersService.create(object);
     } catch (e) {
-      throw new Error(`Falha ao criar usuário: ${e.message}`);
+      new Exception(e);
     }
   }
 
@@ -28,7 +29,7 @@ export class UsersController {
     try {
       return await this.usersService.update(+id, object);
     } catch (e) {
-      throw new Error(`Falha ao atualizar usuário: ${e.message}`);
+      new Exception(e);
     }
   }
 
@@ -37,7 +38,7 @@ export class UsersController {
     try {
       return await this.usersService.findOne(+id);
     } catch (e) {
-      throw e;
+      new Exception(e);
     }
   }
 
@@ -48,11 +49,7 @@ export class UsersController {
       return { message: 'Sucesso ao atualizar senha' };
     } catch (e) {
       const message = `Erro ao atualizar senha: ${e.message}`;
-      throw { ...e, message };
+      new Exception({ ...e, message });
     }
-  }
-
-  async login() {
-    return 'login';
   }
 }

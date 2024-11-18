@@ -16,7 +16,7 @@ import {
 
 @Controller('training-bet')
 export class TrainingBetController {
-  constructor(private readonly trainingBetService: TrainingBetService) {}
+  constructor(private readonly trainingBetService: TrainingBetService) { }
 
   @Post()
   async create(
@@ -37,10 +37,8 @@ export class TrainingBetController {
     try {
       return await this.trainingBetService.update(+id, object);
     } catch (e) {
-      new Exception({
-        ...e,
-        message: `Falha ao atualizar aposta: ${e.message}`,
-      });
+      const message = `Falha ao atualizar aposta: ${e.message}`;
+      new Exception({ ...e, message });
     }
   }
 
@@ -49,7 +47,8 @@ export class TrainingBetController {
     try {
       return await this.trainingBetService.delete(+id);
     } catch (e) {
-      new Exception({ ...e, message: `Falha ao deletar aposta: ${e.message}` });
+      const message = `Falha ao deletar aposta: ${e.message}`;
+      new Exception({ ...e, message });
     }
   }
 
@@ -58,7 +57,8 @@ export class TrainingBetController {
     try {
       return await this.trainingBetService.findOne(+id);
     } catch (e) {
-      new Exception({ ...e, message: `Falha ao buscar aposta: ${e.message}` });
+      const message = `Falha ao buscar aposta: ${e.message}`;
+      new Exception({ ...e, message });
     }
   }
 

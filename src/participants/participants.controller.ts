@@ -15,7 +15,7 @@ import {
 
 @Controller('participants')
 export class ParticipantsController {
-  constructor(private readonly participantsService: ParticipantsService) {}
+  constructor(private readonly participantsService: ParticipantsService) { }
 
   @Post()
   async create(
@@ -36,7 +36,8 @@ export class ParticipantsController {
     try {
       return await this.participantsService.update(+id, object);
     } catch (e) {
-      throw new Error(`Falha ao atualizar lançamento: ${e.message}`);
+      const message = `Falha ao atualizar lançamento: ${e.message}`;
+      new Exception({ ...e, message });
     }
   }
 
@@ -45,7 +46,7 @@ export class ParticipantsController {
     try {
       return await this.participantsService.findOne(+id);
     } catch (e) {
-      throw e;
+      new Exception(e);
     }
   }
 

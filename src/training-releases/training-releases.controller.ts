@@ -30,7 +30,7 @@ if (!fs.existsSync(uploadDir)) {
 export class TrainingReleasesController {
   constructor(
     private readonly trainingReleasesService: TrainingReleasesService,
-  ) {}
+  ) { }
 
   @Post()
   async create(
@@ -76,7 +76,7 @@ export class TrainingReleasesController {
     try {
       return await this.trainingReleasesService.findOne(+id);
     } catch (e) {
-      throw e;
+      new Exception(e);
     }
   }
 
