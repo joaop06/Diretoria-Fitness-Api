@@ -29,6 +29,15 @@ export class UsersEntity {
   @Column({ default: 0.0 })
   height: number;
 
+  @Column({ default: 0 })
+  wins: number;
+
+  @Column({ default: 0 })
+  losses: number;
+
+  @Column({ default: 0 })
+  totalFaults: number;
+
   @OneToMany(() => ParticipantsEntity, (participant) => participant.user)
   participants: ParticipantsEntity[];
 

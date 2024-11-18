@@ -13,6 +13,7 @@ import { ServeStaticModule } from '@nestjs/serve-static';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { JwtAuthGuard } from './auth/jwt/jwt-auth-guard';
+import { RankingModule } from './ranking/ranking.module';
 import { BetDaysModule } from './bet-days/bet-days.module';
 import { TrainingBetModule } from './training-bet/training-bet.module';
 import { ParticipantsModule } from './participants/participants.module';
@@ -42,8 +43,9 @@ import { TrainingReleasesModule } from './training-releases/training-releases.mo
       rootPath: '../public/imagesReleases', // Caminho da pasta de uploads
     }),
     AuthModule,
+    RankingModule,
   ],
   controllers: [AppController],
   providers: [AppService, { provide: APP_GUARD, useClass: JwtAuthGuard }],
 })
-export class AppModule {}
+export class AppModule { }
