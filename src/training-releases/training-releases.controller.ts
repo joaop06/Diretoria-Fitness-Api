@@ -30,7 +30,7 @@ if (!fs.existsSync(uploadDir)) {
 export class TrainingReleasesController {
   constructor(
     private readonly trainingReleasesService: TrainingReleasesService,
-  ) { }
+  ) {}
 
   @Post()
   async create(

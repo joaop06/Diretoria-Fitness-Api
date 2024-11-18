@@ -13,7 +13,7 @@ export class UsersService {
   constructor(
     @InjectRepository(UsersEntity)
     private usersRepository: Repository<UsersEntity>,
-  ) { }
+  ) {}
 
   async create(object: CreateUserDto): Promise<UsersEntity> {
     try {
@@ -27,7 +27,6 @@ export class UsersService {
           message: 'Este email já está em uso',
           statusCode: 409,
         });
-
       } else {
         throw e;
       }

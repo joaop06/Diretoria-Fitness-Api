@@ -16,7 +16,7 @@ import {
 
 @Controller('training-bet')
 export class TrainingBetController {
-  constructor(private readonly trainingBetService: TrainingBetService) { }
+  constructor(private readonly trainingBetService: TrainingBetService) {}
 
   @Post()
   async create(

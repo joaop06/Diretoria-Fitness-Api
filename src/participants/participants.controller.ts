@@ -15,7 +15,7 @@ import {
 
 @Controller('participants')
 export class ParticipantsController {
-  constructor(private readonly participantsService: ParticipantsService) { }
+  constructor(private readonly participantsService: ParticipantsService) {}
 
   @Post()
   async create(
