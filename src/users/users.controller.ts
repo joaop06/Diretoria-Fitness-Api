@@ -3,13 +3,15 @@ import { UsersEntity } from './entities/users.entity';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
+import { Public } from '../../public/decorators/public.decorator';
 import { Body, Controller, Get, Param, Patch, Post, Put } from '@nestjs/common';
 
 @Controller('users')
 export class UsersController {
-  constructor(private readonly usersService: UsersService) {}
+  constructor(private readonly usersService: UsersService) { }
 
   @Post()
+  @Public()
   async create(@Body() object: CreateUserDto): Promise<UsersEntity> {
     try {
       return await this.usersService.create(object);
