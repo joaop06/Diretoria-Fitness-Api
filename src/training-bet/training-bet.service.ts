@@ -1,6 +1,6 @@
 import * as moment from 'moment';
-import { Repository } from 'typeorm';
 import { Cron } from '@nestjs/schedule';
+import { Repository, Not } from 'typeorm';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { BetDaysService } from '../bet-days/bet-days.service';
@@ -18,7 +18,7 @@ export class TrainingBetService {
     private trainingBetRepository: Repository<TrainingBetEntity>,
     private betDaysService: BetDaysService,
     private participantsService: ParticipantsService,
-  ) {}
+  ) { }
 
   @Cron('1 0 * * *') // Executa todo dia às 00:01
   async updateStatistics(id?: number) {
@@ -41,7 +41,7 @@ export class TrainingBetService {
       trainingBets.push(trainingBet);
     } else {
       const bets = await this.trainingBetRepository.find({
-        where: { completed: false },
+        where: { status: Not('Encerrada') },
         relations: [
           'betDays',
           'betDays.trainingReleases',
@@ -121,8 +121,16 @@ export class TrainingBetService {
         await this.betDaysService.update(betDay.id, betDay);
       }
 
-      const completed = betDays.length === betDaysComplete.length;
-      await this.trainingBetRepository.update(trainingBet.id, { completed });
+      let status = trainingBet.status;
+
+      const todayFormat = today.format('YYYY-MM-DD');
+      const completed = trainingBet.betDays.length === betDaysComplete.length;
+      const inProgress = moment(trainingBet.initialDate).isBefore(todayFormat) && moment(trainingBet.finalDate).isAfter(todayFormat);
+
+      if (inProgress && completed) status = 'Encerrada';
+      else if (inProgress) status = 'Em Andamento';
+
+      if (status !== trainingBet.status) await this.trainingBetRepository.update(trainingBet.id, { status });
     }
 
     console.log(`Estatísticas das Apostas atualizadas com sucesso!!`);

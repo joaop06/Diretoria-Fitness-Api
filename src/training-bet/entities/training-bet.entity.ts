@@ -18,10 +18,10 @@ export class TrainingBetEntity {
   @Column()
   duration: number;
 
-  @Column()
+  @Column({ type: 'date' })
   initialDate: Date;
 
-  @Column()
+  @Column({ type: 'date' })
   finalDate: Date;
 
   @Column()
@@ -30,8 +30,8 @@ export class TrainingBetEntity {
   @Column()
   minimumPenaltyAmount: number;
 
-  @Column({ default: false })
-  completed: boolean;
+  @Column({ type: 'enum', enum: ['Encerrada', 'Em Andamento', 'Agendada'], default: 'Agendada' })
+  status: 'Encerrada' | 'Em Andamento' | 'Agendada';
 
   @OneToMany(() => ParticipantsEntity, (participant) => participant.trainingBet)
   participants: ParticipantsEntity[];
