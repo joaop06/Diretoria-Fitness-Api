@@ -165,9 +165,7 @@ export class TrainingBetsService {
     }
 
     if (!!conflict) {
-      throw new Error(
-        'Já existe uma aposta em andamento entre o período informado',
-      );
+      throw new Error('Já existe uma aposta entre o período informado');
     }
   }
 
@@ -292,7 +290,6 @@ export class TrainingBetsService {
           );
       }
 
-      // Valida se há conflito das datas
       const trainingBet = await this.findOne(id);
       if (!trainingBet) throw new Error('Aposta não encontrada');
 
@@ -307,6 +304,12 @@ export class TrainingBetsService {
 
       // Valida se a aposta já foi iniciada
       if (object.initialDate) this.#validateBetStarted(object.initialDate);
+
+      if (['Em Andamente', 'Encerrada'].includes(trainingBet.status)) {
+        throw new Error(
+          `Não é possível editar uma aposta ${trainingBet.status.toLowerCase()}`,
+        );
+      }
 
       newTrainingBet = this.#defineDuration(newTrainingBet);
       const result = await this.trainingBetRepository.update(

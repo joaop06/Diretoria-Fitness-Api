@@ -40,6 +40,9 @@ export class UsersEntity {
   @Column({ default: 0 })
   totalFaults: number;
 
+  @Column()
+  profileImagePath: string;
+
   @OneToMany(() => ParticipantsEntity, (participant) => participant.user)
   participants: ParticipantsEntity[];
 

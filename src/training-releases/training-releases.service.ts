@@ -4,7 +4,7 @@ import { Repository } from 'typeorm';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { BetDaysService } from '../bet-days/bet-days.service';
-import { UploadTrainingFile } from './dto/upload-training-file.dto';
+import { UploadTrainingFileDto } from './dto/upload-training-file.dto';
 import { ParticipantsService } from '../participants/participants.service';
 import { TrainingBetsService } from '../training-bets/training-bets.service';
 import { TrainingReleasesEntity } from './entities/training-releases.entity';
@@ -64,7 +64,7 @@ export class TrainingReleasesService {
     }
   }
 
-  async uploadTrainingPhoto(id: number, object: UploadTrainingFile) {
+  async uploadTrainingPhoto(id: number, object: UploadTrainingFileDto) {
     try {
       const { imagePath } = object;
 

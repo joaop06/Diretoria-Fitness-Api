@@ -1,7 +1,7 @@
 import { IsOptional, IsString } from 'class-validator';
 
-export class UploadTrainingFileDto {
+export class UploadProfileImageDto {
   @IsString()
   @IsOptional()
-  imagePath: string;
+  profileImagePath: string;
 }

@@ -1,3 +1,4 @@
+import * as fs from 'fs';
 import * as bcrypt from 'bcryptjs';
 import { Repository } from 'typeorm';
 import { Injectable } from '@nestjs/common';
@@ -7,6 +8,7 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { Exception } from '../../public/interceptors/exception.filter';
+import { UploadProfileImageDto } from './dto/upload-profile-image.dto';
 
 @Injectable()
 export class UsersService {
@@ -64,5 +66,21 @@ export class UsersService {
     return await this.usersRepository.update(userId, {
       password: object.newPassword,
     });
+  }
+
+  async uploadProfileImage(id: number, object: UploadProfileImageDto) {
+    try {
+      const { profileImagePath } = object;
+
+      const user = await this.usersRepository.findOne({
+        where: { id },
+      });
+      if (!user) throw new Error('Usuário não encontrado');
+
+      return await this.usersRepository.update(id, { profileImagePath });
+    } catch (e) {
+      fs.unlink(object.profileImagePath, () => {});
+      throw e;
+    }
   }
 }
