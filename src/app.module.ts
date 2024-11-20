@@ -15,6 +15,7 @@ import { UsersModule } from './users/users.module';
 import { JwtAuthGuard } from './auth/jwt/jwt-auth-guard';
 import { RankingModule } from './ranking/ranking.module';
 import { BetDaysModule } from './bet-days/bet-days.module';
+import { SystemLogsModule } from './system-logs/system-logs.module';
 import { ParticipantsModule } from './participants/participants.module';
 import { TrainingBetsModule } from './training-bets/training-bets.module';
 import { TrainingReleasesModule } from './training-releases/training-releases.module';
@@ -44,8 +45,9 @@ import { TrainingReleasesModule } from './training-releases/training-releases.mo
     }),
     AuthModule,
     RankingModule,
+    SystemLogsModule,
   ],
   controllers: [AppController],
   providers: [AppService, { provide: APP_GUARD, useClass: JwtAuthGuard }],
 })
-export class AppModule {}
+export class AppModule { }

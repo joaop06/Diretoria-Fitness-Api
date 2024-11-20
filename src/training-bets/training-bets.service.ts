@@ -7,6 +7,7 @@ import { BetDaysService } from '../bet-days/bet-days.service';
 import { TrainingBetEntity } from './entities/training-bet.entity';
 import { BetDaysEntity } from '../bet-days/entities/bet-days.entity';
 import { CreateTrainingBetDto } from './dto/create-training-bet.dto';
+import { SystemLogsService } from '../system-logs/system-logs.service';
 import { ParticipantsService } from '../participants/participants.service';
 import { FindOptionsDto, FindReturnModelDto } from '../../public/dto/find.dto';
 import { ParticipantsEntity } from '../participants/entities/participants.entity';
@@ -17,126 +18,139 @@ export class TrainingBetsService {
     @InjectRepository(TrainingBetEntity)
     private trainingBetRepository: Repository<TrainingBetEntity>,
     private betDaysService: BetDaysService,
+    private systemLogsService: SystemLogsService,
     private participantsService: ParticipantsService,
-  ) {}
+  ) { }
 
   @Cron('1 0 * * *') // Executa todo dia às 00:01
   async updateStatistics(id?: number) {
-    /**
-     * Buscar dias da aposta
-     *
-     * Para cada dia concluído (dias anteriores) da aposta,
-     * Verificar se o participante possui treino:
-     *  - Atualizar participante com a quantidade de faltas
-     *      - Se faltas > permitidas, está desclassificado
-     *
-     *  - Atualizar Dia da aposta com a quantidade de faltas total dos participantes e o aproveitamento (% de participantes que treinou)
-     *
-     *
-     * Se a quantidade de dias concluídos for igual a duração, a aposta está completa
-     */
-    const trainingBets: TrainingBetEntity[] = [];
-    if (id) {
-      const trainingBet = await this.findOne(id);
-      trainingBets.push(trainingBet);
-    } else {
-      const bets = await this.trainingBetRepository.find({
-        where: { status: Not('Encerrada') },
-        relations: [
-          'betDays',
-          'betDays.trainingReleases',
-          'participants',
-          'participants.trainingReleases',
-          'participants.trainingReleases.betDay',
-        ],
-      });
-      trainingBets.push(...bets);
-    }
+    let logMessage: string;
+    try {
+      /**
+        * Buscar dias da aposta
+        *
+        * Para cada dia concluído (dias anteriores) da aposta,
+        * Verificar se o participante possui treino:
+        *  - Atualizar participante com a quantidade de faltas
+        *      - Se faltas > permitidas, está desclassificado
+        *
+        *  - Atualizar Dia da aposta com a quantidade de faltas total dos participantes e o aproveitamento (% de participantes que treinou)
+        *
+        *
+        * Se a quantidade de dias concluídos for igual a duração, a aposta está completa
+        */
+      const trainingBets: TrainingBetEntity[] = [];
+      if (id) {
+        const trainingBet = await this.findOne(id);
+        trainingBets.push(trainingBet);
+      } else {
+        const bets = await this.trainingBetRepository.find({
+          where: { status: Not('Encerrada') },
+          relations: [
+            'betDays',
+            'betDays.trainingReleases',
+            'participants',
+            'participants.trainingReleases',
+            'participants.trainingReleases.betDay',
+          ],
+        });
+        trainingBets.push(...bets);
+      }
 
-    const today = moment();
-    for (const trainingBet of trainingBets) {
-      const { faultsAllowed, betDays, participants } = trainingBet;
-      const betDaysComplete = betDays.filter(
-        (betDay) =>
-          today.isAfter(betDay.day) &&
-          today.format('DD') !== moment(betDay.day).format('DD'),
-      );
+      const today = moment();
+      for (const trainingBet of trainingBets) {
+        const { faultsAllowed, betDays, participants } = trainingBet;
+        const betDaysComplete = betDays.filter(
+          (betDay) =>
+            today.isAfter(betDay.day) &&
+            today.format('DD') !== moment(betDay.day).format('DD'),
+        );
 
-      const betDaysFaults: Partial<BetDaysEntity>[] = [];
-      const participantsFaults: Partial<ParticipantsEntity>[] = [];
+        const betDaysFaults: Partial<BetDaysEntity>[] = [];
+        const participantsFaults: Partial<ParticipantsEntity>[] = [];
 
-      betDaysComplete.forEach((betDay) => {
-        betDaysFaults.push({ id: betDay.id, totalFaults: 0 });
+        betDaysComplete.forEach((betDay) => {
+          betDaysFaults.push({ id: betDay.id, totalFaults: 0 });
 
-        /** Verifica os participantes que não treinaram */
-        participants.forEach((participant) => {
-          // Busca nos treinos pelo participante e o dia atual
-          const participantTraining = participant?.trainingReleases?.find(
-            (item) => item.betDay.id === betDay.id,
+          /** Verifica os participantes que não treinaram */
+          participants.forEach((participant) => {
+            // Busca nos treinos pelo participante e o dia atual
+            const participantTraining = participant?.trainingReleases?.find(
+              (item) => item.betDay.id === betDay.id,
+            );
+
+            /** Se o participante não treinou */
+            if (!participantTraining) {
+              // adiciona uma falha para o participante
+              const participantFault = participantsFaults.find(
+                (item) => item.id === participant.id,
+              );
+
+              if (participantFault) participantFault.faults += 1;
+              else participantsFaults.push({ id: participant.id, faults: 1 });
+
+              // adiciona uma falha ao total do dia
+              const betDayFault = betDaysFaults.find(
+                (item) => item.id === betDay.id,
+              );
+
+              if (betDayFault) betDayFault.totalFaults += 1;
+            }
+          });
+        });
+
+        /** Atualiza as faltas dos participantes */
+        for (const participant of participantsFaults) {
+          // Desclassificado caso exceder a quantidade de faltas permitidas
+          participant.declassified = participant.faults >= faultsAllowed;
+
+          // Calcula o aproveitamento em percentual
+          participant.utilization = parseFloat(
+            (100 - (participant.faults / betDaysComplete.length) * 100).toFixed(
+              2,
+            ),
           );
 
-          /** Se o participante não treinou */
-          if (!participantTraining) {
-            // adiciona uma falha para o participante
-            const participantFault = participantsFaults.find(
-              (item) => item.id === participant.id,
-            );
+          await this.participantsService.update(participant.id, participant);
+        }
 
-            if (participantFault) participantFault.faults += 1;
-            else participantsFaults.push({ id: participant.id, faults: 1 });
+        /** Atualiza as faltas totais dos dias */
+        for (const betDay of betDaysFaults) {
+          // Calcula o aproveitamento em percentual
+          const utilization = parseFloat(
+            (100 - (betDay.totalFaults / participants.length) * 100).toFixed(2),
+          );
+          betDay.utilization = isNaN(utilization) ? 0 : utilization;
 
-            // adiciona uma falha ao total do dia
-            const betDayFault = betDaysFaults.find(
-              (item) => item.id === betDay.id,
-            );
+          await this.betDaysService.update(betDay.id, betDay);
+        }
 
-            if (betDayFault) betDayFault.totalFaults += 1;
-          }
-        });
-      });
+        let status = trainingBet.status;
 
-      /** Atualiza as faltas dos participantes */
-      for (const participant of participantsFaults) {
-        // Desclassificado caso exceder a quantidade de faltas permitidas
-        participant.declassified = participant.faults >= faultsAllowed;
+        const todayFormat = today.format('YYYY-MM-DD');
+        const completed = trainingBet.betDays.length === betDaysComplete.length;
+        const inProgress =
+          moment(trainingBet.initialDate).isBefore(todayFormat) &&
+          moment(trainingBet.finalDate).isAfter(todayFormat);
 
-        // Calcula o aproveitamento em percentual
-        participant.utilization = parseFloat(
-          (100 - (participant.faults / betDaysComplete.length) * 100).toFixed(
-            2,
-          ),
-        );
+        if (inProgress && completed) status = 'Encerrada';
+        else if (inProgress) status = 'Em Andamento';
 
-        await this.participantsService.update(participant.id, participant);
+        if (status !== trainingBet.status)
+          await this.trainingBetRepository.update(trainingBet.id, { status });
       }
 
-      /** Atualiza as faltas totais dos dias */
-      for (const betDay of betDaysFaults) {
-        // Calcula o aproveitamento em percentual
-        const utilization = parseFloat(
-          (100 - (betDay.totalFaults / participants.length) * 100).toFixed(2),
-        );
-        betDay.utilization = isNaN(utilization) ? 0 : utilization;
+      logMessage = 'Estatísticas das Apostas atualizadas com sucesso!';
 
-        await this.betDaysService.update(betDay.id, betDay);
-      }
+    } catch (e) {
+      logMessage = e.message;
 
-      let status = trainingBet.status;
-
-      const todayFormat = today.format('YYYY-MM-DD');
-      const completed = trainingBet.betDays.length === betDaysComplete.length;
-      const inProgress =
-        moment(trainingBet.initialDate).isBefore(todayFormat) &&
-        moment(trainingBet.finalDate).isAfter(todayFormat);
-
-      if (inProgress && completed) status = 'Encerrada';
-      else if (inProgress) status = 'Em Andamento';
-
-      if (status !== trainingBet.status)
-        await this.trainingBetRepository.update(trainingBet.id, { status });
+    } finally {
+      await this.systemLogsService.create({
+        message: logMessage,
+        source: 'TrainingBetsService.updateStatistics'
+      })
     }
-
-    console.log(`Estatísticas das Apostas atualizadas com sucesso!!`);
   }
 
   async #validatePeriodConflict(object: Partial<TrainingBetEntity>) {
