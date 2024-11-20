@@ -18,4 +18,4 @@ import { TrainingBetEntity } from '../training-bets/entities/training-bet.entity
     ]),
   ],
 })
-export class ParticipantsModule { }
+export class ParticipantsModule {}

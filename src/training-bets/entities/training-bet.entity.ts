@@ -30,7 +30,11 @@ export class TrainingBetEntity {
   @Column()
   minimumPenaltyAmount: number;
 
-  @Column({ type: 'enum', enum: ['Encerrada', 'Em Andamento', 'Agendada'], default: 'Agendada' })
+  @Column({
+    type: 'enum',
+    enum: ['Encerrada', 'Em Andamento', 'Agendada'],
+    default: 'Agendada',
+  })
   status: 'Encerrada' | 'Em Andamento' | 'Agendada';
 
   @OneToMany(() => ParticipantsEntity, (participant) => participant.trainingBet)

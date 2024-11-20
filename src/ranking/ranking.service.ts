@@ -7,15 +7,14 @@ import { UsersEntity } from '../users/entities/users.entity';
 export class RankingService {
   constructor(
     @InjectRepository(UsersEntity)
-    private usersRepository: Repository<UsersEntity>
-  ) { }
+    private usersRepository: Repository<UsersEntity>,
+  ) {}
 
   async findAll() {
     try {
       return await this.usersRepository.find({
-        where: {}
-      })
-
+        where: {},
+      });
     } catch (e) {
       throw e;
     }

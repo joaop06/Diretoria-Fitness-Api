@@ -18,4 +18,4 @@ import { TrainingReleasesEntity } from './entities/training-releases.entity';
     ParticipantsModule,
   ],
 })
-export class TrainingReleasesModule { }
+export class TrainingReleasesModule {}

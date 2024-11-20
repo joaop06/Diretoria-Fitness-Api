@@ -16,4 +16,4 @@ import { ParticipantsModule } from '../participants/participants.module';
     ParticipantsModule,
   ],
 })
-export class TrainingBetsModule { }
+export class TrainingBetsModule {}

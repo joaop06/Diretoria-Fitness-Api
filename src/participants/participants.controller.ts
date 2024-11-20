@@ -3,20 +3,11 @@ import { ParticipantsEntity } from './entities/participants.entity';
 import { CreateParticipantDto } from './dto/create-participant.dto';
 import { Exception } from '../../public/interceptors/exception.filter';
 import { FindOptionsDto, FindReturnModelDto } from '../../public/dto/find.dto';
-import {
-  Body,
-  Controller,
-  Get,
-  Param,
-  Patch,
-  Post,
-  Query,
-  Req,
-} from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Query, Req } from '@nestjs/common';
 
 @Controller('participants')
 export class ParticipantsController {
-  constructor(private readonly participantsService: ParticipantsService) { }
+  constructor(private readonly participantsService: ParticipantsService) {}
 
   @Post()
   async create(

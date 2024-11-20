@@ -48,4 +48,4 @@ import { TrainingReleasesModule } from './training-releases/training-releases.mo
   controllers: [AppController],
   providers: [AppService, { provide: APP_GUARD, useClass: JwtAuthGuard }],
 })
-export class AppModule { }
+export class AppModule {}

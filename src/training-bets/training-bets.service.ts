@@ -18,7 +18,7 @@ export class TrainingBetsService {
     private trainingBetRepository: Repository<TrainingBetEntity>,
     private betDaysService: BetDaysService,
     private participantsService: ParticipantsService,
-  ) { }
+  ) {}
 
   @Cron('1 0 * * *') // Executa todo dia às 00:01
   async updateStatistics(id?: number) {
@@ -125,12 +125,15 @@ export class TrainingBetsService {
 
       const todayFormat = today.format('YYYY-MM-DD');
       const completed = trainingBet.betDays.length === betDaysComplete.length;
-      const inProgress = moment(trainingBet.initialDate).isBefore(todayFormat) && moment(trainingBet.finalDate).isAfter(todayFormat);
+      const inProgress =
+        moment(trainingBet.initialDate).isBefore(todayFormat) &&
+        moment(trainingBet.finalDate).isAfter(todayFormat);
 
       if (inProgress && completed) status = 'Encerrada';
       else if (inProgress) status = 'Em Andamento';
 
-      if (status !== trainingBet.status) await this.trainingBetRepository.update(trainingBet.id, { status });
+      if (status !== trainingBet.status)
+        await this.trainingBetRepository.update(trainingBet.id, { status });
     }
 
     console.log(`Estatísticas das Apostas atualizadas com sucesso!!`);

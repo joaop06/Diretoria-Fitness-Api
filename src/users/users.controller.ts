@@ -6,11 +6,20 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { Public } from '../../public/decorators/public.decorator';
 import { Exception } from '../../public/interceptors/exception.filter';
-import { Body, Controller, Get, Param, Patch, Post, Put, Req } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Put,
+  Req,
+} from '@nestjs/common';
 
 @Controller('users')
 export class UsersController {
-  constructor(private readonly usersService: UsersService) { }
+  constructor(private readonly usersService: UsersService) {}
 
   @Post()
   @Public()
@@ -31,7 +40,8 @@ export class UsersController {
     @Body() object: UpdateUserDto,
   ): Promise<any> {
     try {
-      if (req.user.id !== +id) throw new Error('Não é possível alterar dados de outro usuário');
+      if (req.user.id !== +id)
+        throw new Error('Não é possível alterar dados de outro usuário');
 
       return await this.usersService.update(+id, object);
     } catch (e) {
@@ -42,7 +52,8 @@ export class UsersController {
   @Get(':id')
   async findOne(@Req() req, @Param('id') id: string): Promise<UsersEntity> {
     try {
-      if (req.user.id !== +id) throw new Error('Não é possível buscar dados de outro usuário');
+      if (req.user.id !== +id)
+        throw new Error('Não é possível buscar dados de outro usuário');
 
       const user = await this.usersService.findOne(+id);
 

@@ -19,7 +19,7 @@ export class ParticipantsService {
 
     @InjectRepository(UsersEntity)
     private usersRepository: Repository<UsersEntity>,
-  ) { }
+  ) {}
 
   async create(object: CreateParticipantDto): Promise<ParticipantsEntity> {
     try {
