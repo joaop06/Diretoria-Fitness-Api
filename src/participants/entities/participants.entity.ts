@@ -10,7 +10,7 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { UsersEntity } from '../../users/entities/users.entity';
-import { TrainingBetEntity } from '../../training-bet/entities/training-bet.entity';
+import { TrainingBetEntity } from '../../training-bets/entities/training-bet.entity';
 import { TrainingReleasesEntity } from '../../training-releases/entities/training-releases.entity';
 
 @Entity('participants')

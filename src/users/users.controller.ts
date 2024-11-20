@@ -1,21 +1,24 @@
 import { UsersService } from './users.service';
+import { plainToClass } from 'class-transformer';
 import { UsersEntity } from './entities/users.entity';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { Public } from '../../public/decorators/public.decorator';
 import { Exception } from '../../public/interceptors/exception.filter';
-import { Body, Controller, Get, Param, Patch, Post, Put } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, Put, Req } from '@nestjs/common';
 
 @Controller('users')
 export class UsersController {
-  constructor(private readonly usersService: UsersService) {}
+  constructor(private readonly usersService: UsersService) { }
 
   @Post()
   @Public()
   async create(@Body() object: CreateUserDto): Promise<UsersEntity> {
     try {
-      return await this.usersService.create(object);
+      const user = await this.usersService.create(object);
+
+      return plainToClass(UsersEntity, user);
     } catch (e) {
       new Exception(e);
     }
@@ -23,10 +26,13 @@ export class UsersController {
 
   @Patch(':id')
   async update(
+    @Req() req,
     @Param('id') id: string,
     @Body() object: UpdateUserDto,
   ): Promise<any> {
     try {
+      if (req.user.id !== +id) throw new Error('Não é possível alterar dados de outro usuário');
+
       return await this.usersService.update(+id, object);
     } catch (e) {
       new Exception(e);
@@ -34,9 +40,13 @@ export class UsersController {
   }
 
   @Get(':id')
-  async findOne(@Param('id') id: string): Promise<UsersEntity> {
+  async findOne(@Req() req, @Param('id') id: string): Promise<UsersEntity> {
     try {
-      return await this.usersService.findOne(+id);
+      if (req.user.id !== +id) throw new Error('Não é possível buscar dados de outro usuário');
+
+      const user = await this.usersService.findOne(+id);
+
+      return plainToClass(UsersEntity, user);
     } catch (e) {
       new Exception(e);
     }

@@ -11,33 +11,26 @@ import {
   Patch,
   Post,
   Query,
+  Req,
 } from '@nestjs/common';
 
 @Controller('participants')
 export class ParticipantsController {
-  constructor(private readonly participantsService: ParticipantsService) {}
+  constructor(private readonly participantsService: ParticipantsService) { }
 
   @Post()
   async create(
+    @Req() req,
     @Body() object: CreateParticipantDto,
   ): Promise<ParticipantsEntity> {
     try {
+      if (req.user.id !== +object.userId) {
+        throw new Error('Não é possível inscrever outro usuário na aposta');
+      }
+
       return await this.participantsService.create(object);
     } catch (e) {
       new Exception(e);
-    }
-  }
-
-  @Patch(':id')
-  async update(
-    @Param('id') id: string,
-    @Body() object: Partial<ParticipantsEntity>,
-  ): Promise<any> {
-    try {
-      return await this.participantsService.update(+id, object);
-    } catch (e) {
-      const message = `Falha ao atualizar lançamento: ${e.message}`;
-      new Exception({ ...e, message });
     }
   }
 

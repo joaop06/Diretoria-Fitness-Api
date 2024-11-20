@@ -6,7 +6,7 @@ import { UsersEntity } from '../users/entities/users.entity';
 import { ParticipantsEntity } from './entities/participants.entity';
 import { CreateParticipantDto } from './dto/create-participant.dto';
 import { FindOptionsDto, FindReturnModelDto } from '../../public/dto/find.dto';
-import { TrainingBetEntity } from '../training-bet/entities/training-bet.entity';
+import { TrainingBetEntity } from '../training-bets/entities/training-bet.entity';
 
 @Injectable()
 export class ParticipantsService {

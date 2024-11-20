@@ -15,15 +15,15 @@ import { UsersModule } from './users/users.module';
 import { JwtAuthGuard } from './auth/jwt/jwt-auth-guard';
 import { RankingModule } from './ranking/ranking.module';
 import { BetDaysModule } from './bet-days/bet-days.module';
-import { TrainingBetModule } from './training-bet/training-bet.module';
 import { ParticipantsModule } from './participants/participants.module';
+import { TrainingBetsModule } from './training-bets/training-bets.module';
 import { TrainingReleasesModule } from './training-releases/training-releases.module';
 
 @Module({
   imports: [
     UsersModule,
     BetDaysModule,
-    TrainingBetModule,
+    TrainingBetsModule,
     ParticipantsModule,
     TrainingReleasesModule,
     TypeOrmModule.forRoot({

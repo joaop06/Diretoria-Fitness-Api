@@ -4,7 +4,7 @@ import { UsersEntity } from '../users/entities/users.entity';
 import { ParticipantsService } from './participants.service';
 import { ParticipantsController } from './participants.controller';
 import { ParticipantsEntity } from './entities/participants.entity';
-import { TrainingBetEntity } from '../training-bet/entities/training-bet.entity';
+import { TrainingBetEntity } from '../training-bets/entities/training-bet.entity';
 
 @Module({
   exports: [ParticipantsService],
@@ -18,4 +18,4 @@ import { TrainingBetEntity } from '../training-bet/entities/training-bet.entity'
     ]),
   ],
 })
-export class ParticipantsModule {}
+export class ParticipantsModule { }

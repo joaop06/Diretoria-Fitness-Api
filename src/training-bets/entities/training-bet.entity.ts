@@ -10,7 +10,7 @@ import {
 import { BetDaysEntity } from '../../bet-days/entities/bet-days.entity';
 import { ParticipantsEntity } from '../../participants/entities/participants.entity';
 
-@Entity('training_bet')
+@Entity('training_bets')
 export class TrainingBetEntity {
   @PrimaryGeneratedColumn()
   id: number;

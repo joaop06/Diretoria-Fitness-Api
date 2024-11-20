@@ -5,8 +5,8 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { BetDaysService } from '../bet-days/bet-days.service';
 import { UploadTrainingFile } from './dto/upload-training-file.dto';
-import { TrainingBetService } from '../training-bet/training-bet.service';
 import { ParticipantsService } from '../participants/participants.service';
+import { TrainingBetsService } from '../training-bets/training-bets.service';
 import { TrainingReleasesEntity } from './entities/training-releases.entity';
 import { CreateTrainingReleasesDto } from './dto/create-training-release.dto';
 import { FindOptionsDto, FindReturnModelDto } from '../../public/dto/find.dto';
@@ -17,9 +17,9 @@ export class TrainingReleasesService {
     @InjectRepository(TrainingReleasesEntity)
     private trainingReleasesRepository: Repository<TrainingReleasesEntity>,
     private betDaysService: BetDaysService,
-    private trainingBetService: TrainingBetService,
+    private trainingBetService: TrainingBetsService,
     private participantsService: ParticipantsService,
-  ) {}
+  ) { }
 
   async create(
     object: CreateTrainingReleasesDto,
@@ -75,7 +75,7 @@ export class TrainingReleasesService {
 
       return await this.trainingReleasesRepository.update(id, { imagePath });
     } catch (e) {
-      fs.unlink(object.imagePath, () => {});
+      fs.unlink(object.imagePath, () => { });
       throw e;
     }
   }

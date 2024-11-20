@@ -7,6 +7,7 @@ import {
   UpdateDateColumn,
   PrimaryGeneratedColumn,
 } from 'typeorm';
+import { Exclude } from 'class-transformer';
 import { ParticipantsEntity } from '../../participants/entities/participants.entity';
 
 @Entity('users')
@@ -14,13 +15,14 @@ export class UsersEntity {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column()
+  @Column({ nullable: false })
   name: string;
 
-  @Column({ unique: true })
+  @Column({ unique: true, nullable: false })
   email: string;
 
-  @Column()
+  @Exclude()
+  @Column({ nullable: false })
   password: string;
 
   @Column({ default: 0.0 })

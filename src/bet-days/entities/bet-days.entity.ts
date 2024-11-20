@@ -9,7 +9,7 @@ import {
   PrimaryGeneratedColumn,
   OneToMany,
 } from 'typeorm';
-import { TrainingBetEntity } from '../../training-bet/entities/training-bet.entity';
+import { TrainingBetEntity } from '../../training-bets/entities/training-bet.entity';
 import { TrainingReleasesEntity } from '../../training-releases/entities/training-releases.entity';
 
 @Entity('bet_days')

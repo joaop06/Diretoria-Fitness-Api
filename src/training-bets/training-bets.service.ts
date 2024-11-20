@@ -12,7 +12,7 @@ import { FindOptionsDto, FindReturnModelDto } from '../../public/dto/find.dto';
 import { ParticipantsEntity } from '../participants/entities/participants.entity';
 
 @Injectable()
-export class TrainingBetService {
+export class TrainingBetsService {
   constructor(
     @InjectRepository(TrainingBetEntity)
     private trainingBetRepository: Repository<TrainingBetEntity>,

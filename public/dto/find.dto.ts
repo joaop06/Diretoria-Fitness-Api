@@ -27,20 +27,48 @@ export class FindOptionsDto<T> implements FindManyOptions {
     order?: Record<string, 'ASC' | 'DESC'> = { createdAt: 'DESC' };
 
     constructor(query: any = {}) {
+        this.buildWhereClause(query);
+        this.buildOrdenation(query.order);
         this.skip = query?.skip ? Number(query.skip) : this.skip;
         this.take = query?.take ? Number(query.take) : this.take;
-        this.order = query?.order ? JSON.parse(query.order) : this.order;
 
-        this.where = {}
+        const errors = validateSync(this);
+        if (errors.length > 0) {
+            throw new BadRequestException('Parâmetros de busca inválidos');
+        }
+    }
+
+    buildWhereClause(query: object) {
+        this.where = {};
         Object.keys(query).map(key => {
             if (!['skip', 'take', 'order'].includes(key)) {
                 this.where[key] = query[key]
             }
         })
+    }
 
-        const errors = validateSync(this);
-        if (errors.length > 0) {
-            throw new BadRequestException('Parâmetros de busca inválidos');
+    buildOrdenation(order: string) {
+        try {
+            const e = new Error();
+            let ordenation: Array<any>;
+            if (order.startsWith('[[')) ordenation = JSON.parse(order);
+
+            if (!ordenation.length) {
+                // Declara erro para aplicar ordenação padrão
+                throw e;
+            }
+
+            this.order = {};
+            ordenation.forEach(i => {
+                let [field, direction] = i.map(i => i.trim());
+                if (!field) throw e;
+
+                direction = direction.toUpperCase();
+                this.order[field] = !['ASC', 'DESC'].includes(direction) ? 'ASC' : direction
+            })
+
+        } catch (e) {
+            this.order = { createdAt: 'DESC' };
         }
     }
 }
