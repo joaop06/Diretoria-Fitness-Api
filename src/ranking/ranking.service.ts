@@ -25,20 +25,60 @@ export class RankingService {
     private trainingReleasesRepository: Repository<TrainingReleasesEntity>,
 
     private systemLogsService: SystemLogsService,
-  ) {}
+  ) { }
 
   @Cron('5 0 * * *') // Executa todo dia às 00:05
   async updateStatisticsRanking() {
     let logMessage: string;
     try {
-      // const users = await this.usersRepository.find({
-      //   relations: ['participants', 'participants.trainingReleases']
-      // })
+      const users = await this.usersRepository.find();
+
+      const scores = await Promise.all(
+        users.map(async (user) => ({
+          userId: user.id,
+          score: await this.calculateUserScore(user.id),
+        })),
+      );
+
+      scores.map(async score => {
+        await this.rankingRepository.update({ user: { id: score.userId } }, score);
+      });
+
     } catch (e) {
       logMessage = e.message;
       console.error(logMessage);
     }
   }
+
+  async calculateUserScore(userId: number): Promise<number> {
+
+    // Dados do usuário
+    const user = await this.usersRepository.findOneOrFail({ where: { id: userId } });
+    const { wins, losses, totalFaults } = user;
+
+    // Total de apostas participadas
+    const betsParticipated = await this.participantsRepository.count({
+      where: { user: { id: userId } },
+    });
+
+    // Total de dias treinados
+    const trainingDays = await this.trainingReleasesRepository.count({
+      where: { participant: { user: { id: userId } } },
+    });
+
+    // Cálculo da pontuação
+    const PesoV = 10, PesoD = 5, PesoF = 2, PesoAP = 3, PesoDT = 1;
+
+    const score =
+      wins * PesoV -
+      losses * PesoD -
+      totalFaults * PesoF +
+      betsParticipated * PesoAP +
+      trainingDays * PesoDT;
+
+    return score;
+  }
+
 
   async findAll() {
     try {
@@ -54,14 +94,6 @@ export class RankingService {
     try {
       const newRanking = await this.rankingRepository.create(object);
       return await this.rankingRepository.save(newRanking);
-    } catch (e) {
-      throw e;
-    }
-  }
-
-  async update(id: number, object: { score: number }) {
-    try {
-      return await this.rankingRepository.update(id, object);
     } catch (e) {
       throw e;
     }
