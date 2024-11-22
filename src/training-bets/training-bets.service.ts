@@ -1,8 +1,9 @@
 import * as moment from 'moment';
 import { Cron } from '@nestjs/schedule';
-import { Repository, Not } from 'typeorm';
+import { Repository, Not, In } from 'typeorm';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { UsersService } from '../users/users.service';
 import { BetDaysService } from '../bet-days/bet-days.service';
 import { TrainingBetEntity } from './entities/training-bet.entity';
 import { BetDaysEntity } from '../bet-days/entities/bet-days.entity';
@@ -17,10 +18,11 @@ export class TrainingBetsService {
   constructor(
     @InjectRepository(TrainingBetEntity)
     private trainingBetRepository: Repository<TrainingBetEntity>,
+    private usersService: UsersService,
     private betDaysService: BetDaysService,
     private systemLogsService: SystemLogsService,
     private participantsService: ParticipantsService,
-  ) {}
+  ) { }
 
   @Cron('1 0 * * *') // Executa todo dia às 00:01
   async updateStatisticsBets(betId?: number) {
@@ -138,6 +140,11 @@ export class TrainingBetsService {
 
         if (status !== trainingBet.status)
           await this.trainingBetRepository.update(trainingBet.id, { status });
+
+        await Promise.all([
+          this.validateUserWins(),
+          this.validateUserLosses(),
+        ])
       }
 
       if (betId) logMessage = `Apostas ${betId} foi atualizada`;
@@ -150,6 +157,82 @@ export class TrainingBetsService {
         source: 'TrainingBetsService.updateStatistics',
       });
     }
+  }
+
+  async validateUserWins() {
+    try {
+      const trainingBetsClosed = await this.trainingBetRepository.find({
+        where: {
+          status: 'Encerrada',
+        },
+        relations: {
+          participants: {
+            user: true
+          }
+        }
+      });
+
+      const usersWins: { userId: number; wins: number }[] = [];
+      for (let trainingBet of trainingBetsClosed) {
+        trainingBet.participants.forEach(participant => {
+
+          if (participant.declassified === false) {
+            const userId = participant.user.id;
+
+            const userWins = usersWins.find(i => i.userId === userId);
+            if (userWins) userWins.wins++;
+            else usersWins.push({ userId, wins: 1 });
+          }
+        })
+      }
+
+    } catch (e) {
+      await this.systemLogsService.create({
+        level: 'ERROR',
+        source: 'TrainingBetsService.updateUserWins',
+        message: 'Falha ao atualizar os ganhos dos usuários',
+      });
+    }
+  }
+
+  async validateUserLosses() {
+    try {
+      const trainingBetsClosed = await this.trainingBetRepository.find({
+        where: {
+          status: In(['Encerrada', 'Em andamento']),
+        },
+        relations: {
+          participants: {
+            user: true
+          }
+        }
+      });
+
+      const usersWins: { userId: number; wins: number }[] = [];
+      for (let trainingBet of trainingBetsClosed) {
+        trainingBet.participants.forEach(participant => {
+
+          if (participant.declassified === true) {
+            const userId = participant.user.id;
+
+            const userWins = usersWins.find(i => i.userId === userId);
+            if (userWins) userWins.wins++;
+            else usersWins.push({ userId, wins: 1 });
+          }
+        })
+      }
+
+    } catch (e) {
+      await this.systemLogsService.create({
+        level: 'ERROR',
+        source: 'TrainingBetsService.updateUserLosses',
+        message: 'Falha ao atualizar as perdas dos usuários',
+      });
+    }
+  }
+
+  async updateUserStatistics() {
+
   }
 
   async #validatePeriodConflict(object: Partial<TrainingBetEntity>) {

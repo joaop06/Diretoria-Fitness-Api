@@ -10,6 +10,7 @@ import { RankingService } from '../ranking/ranking.service';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { Exception } from '../../public/interceptors/exception.filter';
 import { UploadProfileImageDto } from './dto/upload-profile-image.dto';
+import { UpdateStatisticsUserDto } from './dto/update-statistics-user.dto';
 
 @Injectable()
 export class UsersService {
@@ -18,7 +19,7 @@ export class UsersService {
     private usersRepository: Repository<UsersEntity>,
 
     private rankingService: RankingService,
-  ) {}
+  ) { }
 
   async create(object: CreateUserDto): Promise<UsersEntity> {
     try {
@@ -43,7 +44,7 @@ export class UsersService {
     }
   }
 
-  async update(id: number, object: UpdateUserDto) {
+  async update(id: number, object: UpdateUserDto | UpdateStatisticsUserDto) {
     try {
       return await this.usersRepository.update(id, object);
     } catch (e) {
@@ -87,7 +88,7 @@ export class UsersService {
 
       return await this.usersRepository.update(id, { profileImagePath });
     } catch (e) {
-      fs.unlink(object.profileImagePath, () => {});
+      fs.unlink(object.profileImagePath, () => { });
       throw e;
     }
   }
