@@ -6,6 +6,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { UsersEntity } from './entities/users.entity';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { RankingService } from '../ranking/ranking.service';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { Exception } from '../../public/interceptors/exception.filter';
 import { UploadProfileImageDto } from './dto/upload-profile-image.dto';
@@ -15,6 +16,8 @@ export class UsersService {
   constructor(
     @InjectRepository(UsersEntity)
     private usersRepository: Repository<UsersEntity>,
+
+    private rankingService: RankingService,
   ) {}
 
   async create(object: CreateUserDto): Promise<UsersEntity> {
@@ -22,7 +25,12 @@ export class UsersService {
       const password = await bcrypt.hash(object.password, 10);
 
       const newUser = this.usersRepository.create({ ...object, password });
-      return await this.usersRepository.save(newUser);
+      const result = await this.usersRepository.save(newUser);
+
+      // Insere registro do usuário para classificação
+      await this.rankingService.create(result.id);
+
+      return result;
     } catch (e) {
       if (e.message.includes('Duplicate entry')) {
         new Exception({

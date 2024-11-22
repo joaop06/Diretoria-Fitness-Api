@@ -3,7 +3,6 @@ import { Cron } from '@nestjs/schedule';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { RankingEntity } from './entities/ranking.entity';
-import { CreateRankingDto } from './dto/create-ranking.dto';
 import { UsersEntity } from '../users/entities/users.entity';
 import { SystemLogsService } from '../system-logs/system-logs.service';
 import { ParticipantsEntity } from '../participants/entities/participants.entity';
@@ -25,14 +24,25 @@ export class RankingService {
     private trainingReleasesRepository: Repository<TrainingReleasesEntity>,
 
     private systemLogsService: SystemLogsService,
-  ) { }
+  ) {}
 
   @Cron('5 0 * * *') // Executa todo dia às 00:05
-  async updateStatisticsRanking() {
-    let logMessage: string;
+  async updateStatisticsRanking(userId?: number) {
+    let logMessage = 'Estatísticas dos Usuários atualizadas';
     try {
-      const users = await this.usersRepository.find();
+      const users: UsersEntity[] = [];
+      if (userId) {
+        const user = await this.usersRepository.findOne({
+          where: { id: userId },
+        });
+        users.push(user);
+      } else {
+        users.push(...(await this.usersRepository.find()));
+      }
 
+      /**
+       * Calcula as pontuações de todos os usuários
+       */
       const scores = await Promise.all(
         users.map(async (user) => ({
           userId: user.id,
@@ -40,20 +50,33 @@ export class RankingService {
         })),
       );
 
-      scores.map(async score => {
-        await this.rankingRepository.update({ user: { id: score.userId } }, score);
+      /**
+       * Atualiza as pontuações
+       */
+      scores.map(async (score) => {
+        await this.rankingRepository.update(
+          { user: { id: score.userId } },
+          score,
+        );
       });
 
+      if (userId) logMessage = `Apostas ${userId} foi atualizada`;
     } catch (e) {
       logMessage = e.message;
-      console.error(logMessage);
+    } finally {
+      // Registro de sincronização
+      await this.systemLogsService.create({
+        message: logMessage,
+        source: 'RankingService.updateStatisticsRanking',
+      });
     }
   }
 
-  async calculateUserScore(userId: number): Promise<number> {
-
+  private async calculateUserScore(userId: number): Promise<number> {
     // Dados do usuário
-    const user = await this.usersRepository.findOneOrFail({ where: { id: userId } });
+    const user = await this.usersRepository.findOneOrFail({
+      where: { id: userId },
+    });
     const { wins, losses, totalFaults } = user;
 
     // Total de apostas participadas
@@ -67,7 +90,11 @@ export class RankingService {
     });
 
     // Cálculo da pontuação
-    const PesoV = 10, PesoD = 5, PesoF = 2, PesoAP = 3, PesoDT = 1;
+    const PesoV = 10,
+      PesoD = 5,
+      PesoF = 2,
+      PesoAP = 3,
+      PesoDT = 1;
 
     const score =
       wins * PesoV -
@@ -79,7 +106,6 @@ export class RankingService {
     return score;
   }
 
-
   async findAll() {
     try {
       return await this.rankingRepository.find({
@@ -90,9 +116,13 @@ export class RankingService {
     }
   }
 
-  async create(object: CreateRankingDto) {
+  async create(userId: number) {
     try {
-      const newRanking = await this.rankingRepository.create(object);
+      const user = await this.usersRepository.findOne({
+        where: { id: userId },
+      });
+
+      const newRanking = await this.rankingRepository.create({ user });
       return await this.rankingRepository.save(newRanking);
     } catch (e) {
       throw e;

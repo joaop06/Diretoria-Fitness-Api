@@ -23,7 +23,8 @@ export class TrainingBetsService {
   ) {}
 
   @Cron('1 0 * * *') // Executa todo dia às 00:01
-  async updateStatistics(id?: number, logMessage?: string) {
+  async updateStatisticsBets(betId?: number) {
+    let logMessage = 'Estatísticas das Apostas atualizadas';
     try {
       /**
        * Buscar dias da aposta
@@ -39,8 +40,8 @@ export class TrainingBetsService {
        * Se a quantidade de dias concluídos for igual a duração, a aposta está completa
        */
       const trainingBets: TrainingBetEntity[] = [];
-      if (id) {
-        const trainingBet = await this.findOne(id);
+      if (betId) {
+        const trainingBet = await this.findOne(betId);
         trainingBets.push(trainingBet);
       } else {
         const bets = await this.trainingBetRepository.find({
@@ -139,11 +140,11 @@ export class TrainingBetsService {
           await this.trainingBetRepository.update(trainingBet.id, { status });
       }
 
-      if (!logMessage)
-        logMessage = 'Estatísticas das Apostas atualizadas com sucesso!';
+      if (betId) logMessage = `Apostas ${betId} foi atualizada`;
     } catch (e) {
       logMessage = e.message;
     } finally {
+      // Registro de sincronização
       await this.systemLogsService.create({
         message: logMessage,
         source: 'TrainingBetsService.updateStatistics',

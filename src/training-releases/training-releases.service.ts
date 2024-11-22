@@ -3,6 +3,7 @@ import * as moment from 'moment';
 import { Repository } from 'typeorm';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { RankingService } from '../ranking/ranking.service';
 import { BetDaysService } from '../bet-days/bet-days.service';
 import { UploadTrainingFileDto } from './dto/upload-training-file.dto';
 import { ParticipantsService } from '../participants/participants.service';
@@ -17,6 +18,7 @@ export class TrainingReleasesService {
     @InjectRepository(TrainingReleasesEntity)
     private trainingReleasesRepository: Repository<TrainingReleasesEntity>,
     private betDaysService: BetDaysService,
+    private rankingService: RankingService,
     private trainingBetService: TrainingBetsService,
     private participantsService: ParticipantsService,
   ) {}
@@ -56,11 +58,13 @@ export class TrainingReleasesService {
       const result = await this.trainingReleasesRepository.save(newTrainingBet);
 
       /** Atualiza estatísticas da Aposta */
-      const { id } = participant.trainingBet;
-      this.trainingBetService.updateStatistics(
-        id,
-        `Novo treino registrado na aposta ${id}`,
-      );
+      const { id: betId } = participant.trainingBet;
+      this.trainingBetService.updateStatisticsBets(betId);
+
+      const {
+        user: { id: userId },
+      } = participant;
+      this.rankingService.updateStatisticsRanking(userId);
 
       return result;
     } catch (e) {
