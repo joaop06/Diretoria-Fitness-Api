@@ -20,24 +20,24 @@ export class TrainingBetsService {
     private betDaysService: BetDaysService,
     private systemLogsService: SystemLogsService,
     private participantsService: ParticipantsService,
-  ) { }
+  ) {}
 
   @Cron('1 0 * * *') // Executa todo dia às 00:01
   async updateStatistics(id?: number, logMessage?: string) {
     try {
       /**
-        * Buscar dias da aposta
-        *
-        * Para cada dia concluído (dias anteriores) da aposta,
-        * Verificar se o participante possui treino:
-        *  - Atualizar participante com a quantidade de faltas
-        *      - Se faltas > permitidas, está desclassificado
-        *
-        *  - Atualizar Dia da aposta com a quantidade de faltas total dos participantes e o aproveitamento (% de participantes que treinou)
-        *
-        *
-        * Se a quantidade de dias concluídos for igual a duração, a aposta está completa
-        */
+       * Buscar dias da aposta
+       *
+       * Para cada dia concluído (dias anteriores) da aposta,
+       * Verificar se o participante possui treino:
+       *  - Atualizar participante com a quantidade de faltas
+       *      - Se faltas > permitidas, está desclassificado
+       *
+       *  - Atualizar Dia da aposta com a quantidade de faltas total dos participantes e o aproveitamento (% de participantes que treinou)
+       *
+       *
+       * Se a quantidade de dias concluídos for igual a duração, a aposta está completa
+       */
       const trainingBets: TrainingBetEntity[] = [];
       if (id) {
         const trainingBet = await this.findOne(id);
@@ -139,16 +139,15 @@ export class TrainingBetsService {
           await this.trainingBetRepository.update(trainingBet.id, { status });
       }
 
-      if (!logMessage) logMessage = 'Estatísticas das Apostas atualizadas com sucesso!';
-
+      if (!logMessage)
+        logMessage = 'Estatísticas das Apostas atualizadas com sucesso!';
     } catch (e) {
       logMessage = e.message;
-
     } finally {
       await this.systemLogsService.create({
         message: logMessage,
-        source: 'TrainingBetsService.updateStatistics'
-      })
+        source: 'TrainingBetsService.updateStatistics',
+      });
     }
   }
 

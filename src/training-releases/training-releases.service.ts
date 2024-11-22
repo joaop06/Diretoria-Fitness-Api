@@ -19,7 +19,7 @@ export class TrainingReleasesService {
     private betDaysService: BetDaysService,
     private trainingBetService: TrainingBetsService,
     private participantsService: ParticipantsService,
-  ) { }
+  ) {}
 
   async create(
     object: CreateTrainingReleasesDto,
@@ -57,7 +57,10 @@ export class TrainingReleasesService {
 
       /** Atualiza estatísticas da Aposta */
       const { id } = participant.trainingBet;
-      this.trainingBetService.updateStatistics(id, `Novo treino registrado na aposta ${id}`);
+      this.trainingBetService.updateStatistics(
+        id,
+        `Novo treino registrado na aposta ${id}`,
+      );
 
       return result;
     } catch (e) {
@@ -76,7 +79,7 @@ export class TrainingReleasesService {
 
       return await this.trainingReleasesRepository.update(id, { imagePath });
     } catch (e) {
-      fs.unlink(object.imagePath, () => { });
+      fs.unlink(object.imagePath, () => {});
       throw e;
     }
   }

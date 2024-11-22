@@ -1,13 +1,16 @@
 import {
   Column,
   Entity,
+  OneToOne,
   OneToMany,
+  JoinColumn,
   CreateDateColumn,
   DeleteDateColumn,
   UpdateDateColumn,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { Exclude, Transform } from 'class-transformer';
+import { RankingEntity } from '../../ranking/entities/ranking.entity';
 import { ParticipantsEntity } from '../../participants/entities/participants.entity';
 
 @Entity('users')
@@ -47,6 +50,10 @@ export class UsersEntity {
 
   @OneToMany(() => ParticipantsEntity, (participant) => participant.user)
   participants: ParticipantsEntity[];
+
+  @OneToOne(() => RankingEntity, (ranking) => ranking.user, { cascade: true })
+  @JoinColumn({ name: 'rankingId' })
+  ranking: RankingEntity;
 
   @CreateDateColumn({ type: 'timestamp' })
   createdAt: Date;

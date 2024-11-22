@@ -1,12 +1,12 @@
-import { IsString } from "class-validator";
+import { IsString } from 'class-validator';
 
 export class CreateSystemLogDto {
-    @IsString()
-    message: string;
+  @IsString()
+  message: string;
 
-    // @IsString()
-    // level: string;
+  // @IsString()
+  // level: string;
 
-    @IsString()
-    source: string;
+  @IsString()
+  source: string;
 }

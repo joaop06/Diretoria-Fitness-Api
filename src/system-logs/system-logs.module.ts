@@ -6,6 +6,6 @@ import { SystemLogEntity } from './entities/system-log.entity';
 @Module({
   exports: [SystemLogsService],
   providers: [SystemLogsService],
-  imports: [TypeOrmModule.forFeature([SystemLogEntity])]
+  imports: [TypeOrmModule.forFeature([SystemLogEntity])],
 })
-export class SystemLogsModule { }
+export class SystemLogsModule {}

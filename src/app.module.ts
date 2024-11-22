@@ -22,12 +22,16 @@ import { TrainingReleasesModule } from './training-releases/training-releases.mo
 
 @Module({
   imports: [
+    AuthModule,
     UsersModule,
     BetDaysModule,
-    TrainingBetsModule,
+    RankingModule,
+    SystemLogsModule,
     ParticipantsModule,
+    TrainingBetsModule,
     TrainingReleasesModule,
     TypeOrmModule.forRoot({
+      cache: false,
       type: 'mysql',
       host: process.env.DB_HOST,
       database: process.env.DB_NAME,
@@ -43,11 +47,8 @@ import { TrainingReleasesModule } from './training-releases/training-releases.mo
       serveRoot: '/uploads', // Prefixo da URL
       rootPath: '../public/imagesReleases', // Caminho da pasta de uploads
     }),
-    AuthModule,
-    RankingModule,
-    SystemLogsModule,
   ],
   controllers: [AppController],
   providers: [AppService, { provide: APP_GUARD, useClass: JwtAuthGuard }],
 })
-export class AppModule { }
+export class AppModule {}

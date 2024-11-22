@@ -8,8 +8,8 @@ import { CreateSystemLogDto } from './dto/create-system-log.dto';
 export class SystemLogsService {
   constructor(
     @InjectRepository(SystemLogEntity)
-    private systemLogRepository: Repository<SystemLogEntity>
-  ) { }
+    private systemLogRepository: Repository<SystemLogEntity>,
+  ) {}
 
   async create(object: CreateSystemLogDto) {
     return await this.systemLogRepository.save(object);
