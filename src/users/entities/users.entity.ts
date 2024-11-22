@@ -7,7 +7,7 @@ import {
   UpdateDateColumn,
   PrimaryGeneratedColumn,
 } from 'typeorm';
-import { Exclude } from 'class-transformer';
+import { Exclude, Transform } from 'class-transformer';
 import { ParticipantsEntity } from '../../participants/entities/participants.entity';
 
 @Entity('users')
@@ -25,10 +25,12 @@ export class UsersEntity {
   @Column({ nullable: false })
   password: string;
 
-  @Column({ default: 0.0 })
+  @Transform(({ value }) => parseFloat(value))
+  @Column({ type: 'decimal', default: 0.0 })
   weight: number;
 
-  @Column({ default: 0.0 })
+  @Transform(({ value }) => parseFloat(value))
+  @Column({ type: 'decimal', default: 0.0 })
   height: number;
 
   @Column({ default: 0 })

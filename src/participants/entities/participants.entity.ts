@@ -9,6 +9,7 @@ import {
   UpdateDateColumn,
   PrimaryGeneratedColumn,
 } from 'typeorm';
+import { Transform } from 'class-transformer';
 import { UsersEntity } from '../../users/entities/users.entity';
 import { TrainingBetEntity } from '../../training-bets/entities/training-bet.entity';
 import { TrainingReleasesEntity } from '../../training-releases/entities/training-releases.entity';
@@ -24,6 +25,7 @@ export class ParticipantsEntity {
   @Column({ default: false })
   declassified: boolean;
 
+  @Transform(({ value }) => parseFloat(value))
   @Column({ type: 'decimal', default: 0.0 })
   utilization: number;
 

@@ -1,3 +1,6 @@
+import { Transform } from 'class-transformer';
+import { TrainingBetEntity } from '../../training-bets/entities/training-bet.entity';
+import { TrainingReleasesEntity } from '../../training-releases/entities/training-releases.entity';
 import {
   Column,
   Entity,
@@ -9,8 +12,6 @@ import {
   PrimaryGeneratedColumn,
   OneToMany,
 } from 'typeorm';
-import { TrainingBetEntity } from '../../training-bets/entities/training-bet.entity';
-import { TrainingReleasesEntity } from '../../training-releases/entities/training-releases.entity';
 
 @Entity('bet_days')
 export class BetDaysEntity {
@@ -26,6 +27,7 @@ export class BetDaysEntity {
   @Column({ default: 0 })
   totalFaults: number;
 
+  @Transform(({ value }) => parseFloat(value))
   @Column({ type: 'decimal', default: 0.0 })
   utilization: number;
 

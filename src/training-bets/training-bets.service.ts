@@ -23,8 +23,7 @@ export class TrainingBetsService {
   ) { }
 
   @Cron('1 0 * * *') // Executa todo dia às 00:01
-  async updateStatistics(id?: number) {
-    let logMessage: string;
+  async updateStatistics(id?: number, logMessage?: string) {
     try {
       /**
         * Buscar dias da aposta
@@ -140,7 +139,7 @@ export class TrainingBetsService {
           await this.trainingBetRepository.update(trainingBet.id, { status });
       }
 
-      logMessage = 'Estatísticas das Apostas atualizadas com sucesso!';
+      if (!logMessage) logMessage = 'Estatísticas das Apostas atualizadas com sucesso!';
 
     } catch (e) {
       logMessage = e.message;
@@ -157,22 +156,22 @@ export class TrainingBetsService {
     let conflict: TrainingBetEntity | null;
     if (object.id) {
       conflict = await this.trainingBetRepository
-        .createQueryBuilder('training_bet')
-        .where('training_bet.initialDate < :finalDate', {
+        .createQueryBuilder('training_bets')
+        .where('training_bets.initialDate < :finalDate', {
           finalDate: object.finalDate,
         })
-        .andWhere('training_bet.finalDate > :initialDate', {
+        .andWhere('training_bets.finalDate > :initialDate', {
           initialDate: object.initialDate,
         })
-        .andWhere('training_bet.id != :id', { id: object.id })
+        .andWhere('training_bets.id != :id', { id: object.id })
         .getOne();
     } else {
       conflict = await this.trainingBetRepository
-        .createQueryBuilder('training_bet')
-        .where('training_bet.initialDate < :finalDate', {
+        .createQueryBuilder('training_bets')
+        .where('training_bets.initialDate < :finalDate', {
           finalDate: object.finalDate,
         })
-        .andWhere('training_bet.finalDate > :initialDate', {
+        .andWhere('training_bets.finalDate > :initialDate', {
           initialDate: object.initialDate,
         })
         .getOne();

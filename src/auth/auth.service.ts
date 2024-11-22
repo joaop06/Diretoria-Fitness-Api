@@ -2,6 +2,7 @@ import * as bcrypt from 'bcryptjs';
 import { JwtService } from '@nestjs/jwt';
 import { LoginDto } from './dto/login.dto';
 import { Injectable } from '@nestjs/common';
+import { plainToClass } from 'class-transformer';
 import { UsersService } from '../users/users.service';
 import { UsersEntity } from '../users/entities/users.entity';
 
@@ -10,7 +11,7 @@ export class AuthService {
   constructor(
     private usersService: UsersService,
     private jwtService: JwtService,
-  ) {}
+  ) { }
 
   async validateUser(object: LoginDto) {
     const { email, password } = object;
@@ -28,7 +29,7 @@ export class AuthService {
     const payload = { email: user.email, sub: user.id };
 
     return {
-      user,
+      user: plainToClass(UsersEntity, user),
       message: 'Login realizado com sucesso!',
       accessToken: this.jwtService.sign(payload),
     };
