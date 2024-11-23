@@ -1,12 +1,12 @@
 import { IsNumber } from 'class-validator';
 
 export class UpdateStatisticsUserDto {
-    @IsNumber()
-    wins?: number;
+  @IsNumber()
+  wins?: number;
 
-    @IsNumber()
-    losses?: number;
+  @IsNumber()
+  losses?: number;
 
-    @IsNumber()
-    totalFaults?: number;
+  @IsNumber()
+  totalFaults?: number;
 }

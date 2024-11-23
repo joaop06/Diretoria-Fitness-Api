@@ -1,8 +1,11 @@
+import * as dotenv from 'dotenv';
+dotenv.config();
+
 import * as moment from 'moment';
 import { Cron } from '@nestjs/schedule';
-import { Repository, Not, In } from 'typeorm';
-import { Injectable } from '@nestjs/common';
+import { Repository, Not } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
+import { Injectable, Logger } from '@nestjs/common';
 import { UsersService } from '../users/users.service';
 import { BetDaysService } from '../bet-days/bet-days.service';
 import { TrainingBetEntity } from './entities/training-bet.entity';
@@ -15,6 +18,8 @@ import { ParticipantsEntity } from '../participants/entities/participants.entity
 
 @Injectable()
 export class TrainingBetsService {
+  private logger: Logger;
+
   constructor(
     @InjectRepository(TrainingBetEntity)
     private trainingBetRepository: Repository<TrainingBetEntity>,
@@ -22,7 +27,13 @@ export class TrainingBetsService {
     private betDaysService: BetDaysService,
     private systemLogsService: SystemLogsService,
     private participantsService: ParticipantsService,
-  ) { }
+  ) {
+    this.logger = new Logger();
+    this.logger.error = (message) =>
+      process.env.NODE_ENV === 'development'
+        ? this.logger.error(message)
+        : null;
+  }
 
   @Cron('1 0 * * *') // Executa todo dia às 00:01
   async updateStatisticsBets(betId?: number) {
@@ -104,7 +115,7 @@ export class TrainingBetsService {
         /** Atualiza as faltas dos participantes */
         for (const participant of participantsFaults) {
           // Desclassificado caso exceder a quantidade de faltas permitidas
-          participant.declassified = participant.faults >= faultsAllowed;
+          participant.declassified = participant.faults > faultsAllowed;
 
           // Calcula o aproveitamento em percentual
           participant.utilization = parseFloat(
@@ -114,6 +125,10 @@ export class TrainingBetsService {
           );
 
           await this.participantsService.update(participant.id, participant);
+
+          // Atualiza as derrotas totais do Usuário
+          await this.validateUserLosses(participant.user.id);
+          await this.validateUserTotalFaults(participant.user.id);
         }
 
         /** Atualiza as faltas totais dos dias */
@@ -141,14 +156,12 @@ export class TrainingBetsService {
         if (status !== trainingBet.status)
           await this.trainingBetRepository.update(trainingBet.id, { status });
 
-        await Promise.all([
-          this.validateUserWins(),
-          this.validateUserLosses(),
-        ])
+        await this.validateUserWins();
       }
 
       if (betId) logMessage = `Apostas ${betId} foi atualizada`;
     } catch (e) {
+      this.logger.error(e);
       logMessage = e.message;
     } finally {
       // Registro de sincronização
@@ -166,27 +179,32 @@ export class TrainingBetsService {
           status: 'Encerrada',
         },
         relations: {
-          participants: {
-            user: true
-          }
-        }
+          participants: { user: true },
+        },
       });
 
-      const usersWins: { userId: number; wins: number }[] = [];
-      for (let trainingBet of trainingBetsClosed) {
-        trainingBet.participants.forEach(participant => {
-
+      /**
+       * Valida dentre cada aposta Encerrada, todos os participantes.
+       * Adicionando 1 vitória se NÃO foi desclassificado naquela aposta.
+       */
+      const usersWins: { id: number; wins: number }[] = [];
+      for (const trainingBet of trainingBetsClosed) {
+        trainingBet.participants.forEach((participant) => {
           if (participant.declassified === false) {
             const userId = participant.user.id;
 
-            const userWins = usersWins.find(i => i.userId === userId);
+            const userWins = usersWins.find((i) => i.id === userId);
             if (userWins) userWins.wins++;
-            else usersWins.push({ userId, wins: 1 });
+            else usersWins.push({ id: userId, wins: 1 });
           }
-        })
+        });
       }
 
+      await Promise.all(
+        usersWins.map((user) => this.usersService.update(user.id, user)),
+      );
     } catch (e) {
+      this.logger.error(e);
       await this.systemLogsService.create({
         level: 'ERROR',
         source: 'TrainingBetsService.updateUserWins',
@@ -195,44 +213,65 @@ export class TrainingBetsService {
     }
   }
 
-  async validateUserLosses() {
+  async validateUserLosses(userId: number) {
     try {
-      const trainingBetsClosed = await this.trainingBetRepository.find({
-        where: {
-          status: In(['Encerrada', 'Em andamento']),
-        },
-        relations: {
-          participants: {
-            user: true
-          }
-        }
-      });
+      /**
+       * Montagem da query diretamente com o filtro do usuário
+       */
+      const trainingBetsClosed = await this.trainingBetRepository
+        .createQueryBuilder('traningBet')
+        .leftJoinAndSelect('traningBet.participants', 'participants')
+        .leftJoinAndSelect('participants.user', 'users')
+        .where('traningBet.status IN (:...statuses)', {
+          statuses: ['Encerrada', 'Em Andamento'],
+        })
+        .andWhere('user.id = :userId', { userId })
+        .getMany();
 
-      const usersWins: { userId: number; wins: number }[] = [];
-      for (let trainingBet of trainingBetsClosed) {
-        trainingBet.participants.forEach(participant => {
-
+      /**
+       * Valida dentre cada aposta, todos os participantes.
+       * Adicionando 1 derrota se foi desclassificado naquela aposta.
+       */
+      const usersLosses: { id: number; losses: number }[] = [];
+      for (const trainingBet of trainingBetsClosed) {
+        trainingBet.participants.forEach((participant) => {
           if (participant.declassified === true) {
             const userId = participant.user.id;
 
-            const userWins = usersWins.find(i => i.userId === userId);
-            if (userWins) userWins.wins++;
-            else usersWins.push({ userId, wins: 1 });
+            const userWins = usersLosses.find((i) => i.id === userId);
+            if (userWins) userWins.losses++;
+            else usersLosses.push({ id: userId, losses: 1 });
           }
-        })
+        });
       }
 
+      await Promise.all(
+        usersLosses.map((user) => this.usersService.update(user.id, user)),
+      );
     } catch (e) {
+      this.logger.error(e);
       await this.systemLogsService.create({
         level: 'ERROR',
         source: 'TrainingBetsService.updateUserLosses',
-        message: 'Falha ao atualizar as perdas dos usuários',
+        message: 'Falha ao atualizar as derrotas dos usuários',
       });
     }
   }
 
-  async updateUserStatistics() {
+  async validateUserTotalFaults(userId: number) {
+    try {
+      const totalFaults =
+        await this.participantsService.getTotalFaultsFromUser(userId);
 
+      await this.usersService.update(userId, { totalFaults });
+    } catch (e) {
+      this.logger.error(e);
+      await this.systemLogsService.create({
+        level: 'ERROR',
+        source: 'TrainingBetsService.validateUserTotalFaults',
+        message: 'Falha ao atualizar as falhas totais dos usuários',
+      });
+    }
   }
 
   async #validatePeriodConflict(object: Partial<TrainingBetEntity>) {
@@ -369,6 +408,7 @@ export class TrainingBetsService {
 
       return result;
     } catch (e) {
+      this.logger.error(e);
       throw e;
     }
   }
@@ -421,6 +461,7 @@ export class TrainingBetsService {
 
       return result;
     } catch (e) {
+      this.logger.error(e);
       throw e;
     }
   }
@@ -431,6 +472,7 @@ export class TrainingBetsService {
 
       return result;
     } catch (e) {
+      this.logger.error(e);
       throw e;
     }
   }
@@ -442,6 +484,7 @@ export class TrainingBetsService {
         relations: ['betDays', 'betDays.trainingReleases', 'participants'],
       });
     } catch (e) {
+      this.logger.error(e);
       throw e;
     }
   }

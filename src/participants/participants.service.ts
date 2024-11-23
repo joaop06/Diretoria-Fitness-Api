@@ -108,4 +108,20 @@ export class ParticipantsService {
       throw e;
     }
   }
+
+  async getTotalFaultsFromUser(userId: number): Promise<number> {
+    try {
+      const participants = await this.participantsRepository.find({
+        where: {
+          user: {
+            id: userId,
+          },
+        },
+      });
+
+      return participants.reduce((acc, curr) => (acc += curr.faults), 0);
+    } catch (e) {
+      throw { ...e, message: 'Falha ao buscar dados do participante' };
+    }
+  }
 }
