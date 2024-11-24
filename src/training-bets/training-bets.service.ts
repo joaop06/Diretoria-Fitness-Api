@@ -305,14 +305,11 @@ export class TrainingBetsService {
   }
 
   #validateBetStarted(initialDate: Date | string) {
-    const today = moment().startOf('day');
-    const initialDateMoment = moment(initialDate).startOf('day');
-    if (
-      today.isBefore(initialDateMoment) &&
-      today.diff(initialDateMoment, 'days') > 0
-    ) {
+    const today = moment();
+    const initialDateMoment = moment(initialDate);
+    if (today.diff(initialDateMoment, 'hours') < 12) {
       throw new Error(
-        'A aposta deve ser programada com no mínimo 1 dia de antecedência',
+        'Deve ser programada com no mínimo 12 horas de antecedência',
       );
     }
   }
