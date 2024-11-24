@@ -1,5 +1,5 @@
 import { IsString, IsNumber, IsNotEmpty } from 'class-validator';
-import { TrainingBetEntity } from '../../training-bet/entities/training-bet.entity';
+import { TrainingBetEntity } from '../../training-bets/entities/training-bet.entity';
 
 export class CreateBetDayDto {
   @IsString()

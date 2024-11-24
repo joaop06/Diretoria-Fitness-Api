@@ -3,15 +3,7 @@ import { ParticipantsEntity } from './entities/participants.entity';
 import { CreateParticipantDto } from './dto/create-participant.dto';
 import { Exception } from '../../public/interceptors/exception.filter';
 import { FindOptionsDto, FindReturnModelDto } from '../../public/dto/find.dto';
-import {
-  Body,
-  Controller,
-  Get,
-  Param,
-  Patch,
-  Post,
-  Query,
-} from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Query, Req } from '@nestjs/common';
 
 @Controller('participants')
 export class ParticipantsController {
@@ -19,25 +11,17 @@ export class ParticipantsController {
 
   @Post()
   async create(
+    @Req() req,
     @Body() object: CreateParticipantDto,
   ): Promise<ParticipantsEntity> {
     try {
+      if (req.user.id !== +object.userId) {
+        throw new Error('Não é possível inscrever outro usuário na aposta');
+      }
+
       return await this.participantsService.create(object);
     } catch (e) {
       new Exception(e);
-    }
-  }
-
-  @Patch(':id')
-  async update(
-    @Param('id') id: string,
-    @Body() object: Partial<ParticipantsEntity>,
-  ): Promise<any> {
-    try {
-      return await this.participantsService.update(+id, object);
-    } catch (e) {
-      const message = `Falha ao atualizar lançamento: ${e.message}`;
-      new Exception({ ...e, message });
     }
   }
 

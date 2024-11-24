@@ -2,9 +2,9 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 import { diskStorage } from 'multer';
-import { FileDto } from './dto/file.dto';
+import { FileDto } from '../../public/dto/file.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { UploadTrainingFile } from './dto/upload-training-file.dto';
+import { UploadTrainingFileDto } from './dto/upload-training-file.dto';
 import { TrainingReleasesService } from './training-releases.service';
 import { Exception } from '../../public/interceptors/exception.filter';
 import { TrainingReleasesEntity } from './entities/training-releases.entity';
@@ -58,7 +58,7 @@ export class TrainingReleasesController {
   async uploadTrainingPhoto(
     @UploadedFile() file: FileDto,
     @Param('id') id: string,
-    @Body() object: UploadTrainingFile,
+    @Body() object: UploadTrainingFileDto,
   ) {
     try {
       object.imagePath = file.path;

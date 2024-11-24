@@ -1,3 +1,4 @@
+import * as fs from 'fs';
 import * as bcrypt from 'bcryptjs';
 import { Repository } from 'typeorm';
 import { Injectable } from '@nestjs/common';
@@ -5,14 +6,19 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { UsersEntity } from './entities/users.entity';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { RankingService } from '../ranking/ranking.service';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { Exception } from '../../public/interceptors/exception.filter';
+import { UploadProfileImageDto } from './dto/upload-profile-image.dto';
+import { UpdateStatisticsUserDto } from './dto/update-statistics-user.dto';
 
 @Injectable()
 export class UsersService {
   constructor(
     @InjectRepository(UsersEntity)
     private usersRepository: Repository<UsersEntity>,
+
+    private rankingService: RankingService,
   ) {}
 
   async create(object: CreateUserDto): Promise<UsersEntity> {
@@ -20,7 +26,12 @@ export class UsersService {
       const password = await bcrypt.hash(object.password, 10);
 
       const newUser = this.usersRepository.create({ ...object, password });
-      return await this.usersRepository.save(newUser);
+      const result = await this.usersRepository.save(newUser);
+
+      // Insere registro do usuário para classificação
+      await this.rankingService.create(result.id);
+
+      return result;
     } catch (e) {
       if (e.message.includes('Duplicate entry')) {
         new Exception({
@@ -33,7 +44,7 @@ export class UsersService {
     }
   }
 
-  async update(id: number, object: UpdateUserDto) {
+  async update(id: number, object: UpdateUserDto | UpdateStatisticsUserDto) {
     try {
       return await this.usersRepository.update(id, object);
     } catch (e) {
@@ -64,5 +75,21 @@ export class UsersService {
     return await this.usersRepository.update(userId, {
       password: object.newPassword,
     });
+  }
+
+  async uploadProfileImage(id: number, object: UploadProfileImageDto) {
+    try {
+      const { profileImagePath } = object;
+
+      const user = await this.usersRepository.findOne({
+        where: { id },
+      });
+      if (!user) throw new Error('Usuário não encontrado');
+
+      return await this.usersRepository.update(id, { profileImagePath });
+    } catch (e) {
+      fs.unlink(object.profileImagePath, () => {});
+      throw e;
+    }
   }
 }

@@ -6,7 +6,7 @@ import { UsersEntity } from '../users/entities/users.entity';
 import { ParticipantsEntity } from './entities/participants.entity';
 import { CreateParticipantDto } from './dto/create-participant.dto';
 import { FindOptionsDto, FindReturnModelDto } from '../../public/dto/find.dto';
-import { TrainingBetEntity } from '../training-bet/entities/training-bet.entity';
+import { TrainingBetEntity } from '../training-bets/entities/training-bet.entity';
 
 @Injectable()
 export class ParticipantsService {
@@ -86,8 +86,8 @@ export class ParticipantsService {
           },
           trainingBet: {
             id: true,
+            status: true,
             duration: true,
-            completed: true,
             faultsAllowed: true,
           },
         },
@@ -106,6 +106,22 @@ export class ParticipantsService {
       return { rows, count };
     } catch (e) {
       throw e;
+    }
+  }
+
+  async getTotalFaultsFromUser(userId: number): Promise<number> {
+    try {
+      const participants = await this.participantsRepository.find({
+        where: {
+          user: {
+            id: userId,
+          },
+        },
+      });
+
+      return participants.reduce((acc, curr) => (acc += curr.faults), 0);
+    } catch (e) {
+      throw { ...e, message: 'Falha ao buscar dados do participante' };
     }
   }
 }

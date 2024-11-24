@@ -3,10 +3,11 @@ import * as moment from 'moment';
 import { Repository } from 'typeorm';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { RankingService } from '../ranking/ranking.service';
 import { BetDaysService } from '../bet-days/bet-days.service';
-import { UploadTrainingFile } from './dto/upload-training-file.dto';
-import { TrainingBetService } from '../training-bet/training-bet.service';
+import { UploadTrainingFileDto } from './dto/upload-training-file.dto';
 import { ParticipantsService } from '../participants/participants.service';
+import { TrainingBetsService } from '../training-bets/training-bets.service';
 import { TrainingReleasesEntity } from './entities/training-releases.entity';
 import { CreateTrainingReleasesDto } from './dto/create-training-release.dto';
 import { FindOptionsDto, FindReturnModelDto } from '../../public/dto/find.dto';
@@ -17,7 +18,8 @@ export class TrainingReleasesService {
     @InjectRepository(TrainingReleasesEntity)
     private trainingReleasesRepository: Repository<TrainingReleasesEntity>,
     private betDaysService: BetDaysService,
-    private trainingBetService: TrainingBetService,
+    private rankingService: RankingService,
+    private trainingBetService: TrainingBetsService,
     private participantsService: ParticipantsService,
   ) {}
 
@@ -56,7 +58,13 @@ export class TrainingReleasesService {
       const result = await this.trainingReleasesRepository.save(newTrainingBet);
 
       /** Atualiza estatísticas da Aposta */
-      this.trainingBetService.updateStatistics(participant.trainingBet.id);
+      const { id: betId } = participant.trainingBet;
+      this.trainingBetService.updateStatisticsBets(betId);
+
+      const {
+        user: { id: userId },
+      } = participant;
+      this.rankingService.updateStatisticsRanking(userId);
 
       return result;
     } catch (e) {
@@ -64,7 +72,7 @@ export class TrainingReleasesService {
     }
   }
 
-  async uploadTrainingPhoto(id: number, object: UploadTrainingFile) {
+  async uploadTrainingPhoto(id: number, object: UploadTrainingFileDto) {
     try {
       const { imagePath } = object;
 

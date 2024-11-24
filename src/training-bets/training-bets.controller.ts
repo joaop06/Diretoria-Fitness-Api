@@ -1,4 +1,4 @@
-import { TrainingBetService } from './training-bet.service';
+import { TrainingBetsService } from './training-bets.service';
 import { TrainingBetEntity } from './entities/training-bet.entity';
 import { CreateTrainingBetDto } from './dto/create-training-bet.dto';
 import { Exception } from '../../public/interceptors/exception.filter';
@@ -14,9 +14,9 @@ import {
   Query,
 } from '@nestjs/common';
 
-@Controller('training-bet')
-export class TrainingBetController {
-  constructor(private readonly trainingBetService: TrainingBetService) {}
+@Controller('training-bets')
+export class TrainingBetsController {
+  constructor(private readonly trainingBetService: TrainingBetsService) {}
 
   @Post()
   async create(

@@ -18,20 +18,24 @@ export class TrainingBetEntity {
   @Column()
   duration: number;
 
-  @Column()
+  @Column({ type: 'date' })
   initialDate: Date;
 
-  @Column()
+  @Column({ type: 'date' })
   finalDate: Date;
 
   @Column()
   faultsAllowed: number;
 
-  @Column()
+  @Column({ default: 0.0, nullable: false })
   minimumPenaltyAmount: number;
 
-  @Column({ default: false })
-  completed: boolean;
+  @Column({
+    type: 'enum',
+    default: 'Agendada',
+    enum: ['Encerrada', 'Em Andamento', 'Agendada'],
+  })
+  status: 'Encerrada' | 'Em Andamento' | 'Agendada';
 
   @OneToMany(() => ParticipantsEntity, (participant) => participant.trainingBet)
   participants: ParticipantsEntity[];
