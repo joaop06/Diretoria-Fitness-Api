@@ -29,10 +29,6 @@ export class TrainingBetsService {
     private participantsService: ParticipantsService,
   ) {
     this.logger = new Logger();
-    this.logger.error = (message) =>
-      process.env.NODE_ENV === 'development'
-        ? this.logger.error(message)
-        : null;
   }
 
   @Cron('1 0 * * *') // Executa todo dia às 00:01
@@ -305,11 +301,18 @@ export class TrainingBetsService {
   }
 
   #validateBetStarted(initialDate: Date | string) {
-    const today = moment();
+    const now = moment();
     const initialDateMoment = moment(initialDate);
-    if (today.diff(initialDateMoment, 'hours') < 12) {
+
+    if (initialDateMoment.isBefore(now, 'day')) {
+      throw new Error('A data da aposta não pode ser no passado');
+    }
+
+    const hoursDifference = initialDateMoment.diff(now, 'hours');
+
+    if (hoursDifference < 12) {
       throw new Error(
-        'Deve ser programada com no mínimo 12 horas de antecedência',
+        'A aposta precisa ser cadastrada com pelo menos 12 horas de antecedência',
       );
     }
   }
