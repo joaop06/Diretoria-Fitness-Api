@@ -302,19 +302,42 @@ export class TrainingBetsService {
 
   #validateBetStarted(initialDate: Date | string) {
     const now = moment();
+    const currDay = parseInt(now.format('DD'));
+    const currMonth = parseInt(now.format('MM'));
+    const currYear = parseInt(now.format('YYYY'));
+
     const initialDateMoment = moment(initialDate);
+    const day = parseInt(initialDateMoment.format('DD'));
+    const month = parseInt(initialDateMoment.format('MM'));
+    const year = parseInt(initialDateMoment.format('YYYY'));
 
-    if (initialDateMoment.isBefore(now, 'day')) {
-      throw new Error('A data da aposta não pode ser no passado');
-    }
-
-    const hoursDifference = initialDateMoment.diff(now, 'hours');
-
-    if (hoursDifference < 12) {
+    if (
+      year < currYear ||
+      (year === currYear && month < currMonth) ||
+      (year === currYear && month === currMonth && day <= currDay)
+    ) {
       throw new Error(
-        'A aposta precisa ser cadastrada com pelo menos 12 horas de antecedência',
+        'A aposta não pode ser agendada para a data atual ou anterior',
       );
     }
+
+    // if (now.format('YYYY-MM-DD') == initialDateMoment.format('YYYY-MM-DD')) {
+    //   throw new Error(
+    //     'A aposta precisa ser cadastrada com pelo menos 1 dia de antecedência',
+    //   );
+    // }
+
+    // if (initialDateMoment.isBefore(now, 'day')) {
+    //   throw new Error('A data da aposta não pode ser no passado');
+    // }
+
+    // const hoursDifference = initialDateMoment.diff(now, 'hours');
+
+    // if (hoursDifference < 12) {
+    //   throw new Error(
+    //     'A aposta precisa ser cadastrada com pelo menos 12 horas de antecedência',
+    //   );
+    // }
   }
 
   #defineDuration(object: Partial<TrainingBetEntity>) {
