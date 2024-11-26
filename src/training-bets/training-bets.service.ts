@@ -7,6 +7,7 @@ import { Repository, Not } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Injectable, Logger } from '@nestjs/common';
 import { UsersService } from '../users/users.service';
+import { RankingService } from '../ranking/ranking.service';
 import { BetDaysService } from '../bet-days/bet-days.service';
 import { TrainingBetEntity } from './entities/training-bet.entity';
 import { BetDaysEntity } from '../bet-days/entities/bet-days.entity';
@@ -25,12 +26,14 @@ export class TrainingBetsService {
     private trainingBetRepository: Repository<TrainingBetEntity>,
     private usersService: UsersService,
     private betDaysService: BetDaysService,
+    private rankingService: RankingService,
     private systemLogsService: SystemLogsService,
     private participantsService: ParticipantsService,
   ) {
     this.logger = new Logger();
   }
 
+  // @Timeout(1) // homolog
   @Cron('1 0 * * *') // Executa todo dia às 00:01
   async updateStatisticsBets(betId?: number) {
     let logMessage = 'Estatísticas das Apostas atualizadas';
@@ -59,6 +62,7 @@ export class TrainingBetsService {
             'betDays',
             'betDays.trainingReleases',
             'participants',
+            'participants.user',
             'participants.trainingReleases',
             'participants.trainingReleases.betDay',
           ],
@@ -71,8 +75,10 @@ export class TrainingBetsService {
         const { faultsAllowed, betDays, participants } = trainingBet;
         const betDaysComplete = betDays.filter(
           (betDay) =>
-            today.isAfter(betDay.day) &&
-            today.format('DD') !== moment(betDay.day).format('DD'),
+            today.startOf('day').isAfter(moment(betDay.day)) &&
+            (today.format('DD') !== moment(betDay.day).format('DD') ||
+              (today.format('MM') !== moment(betDay.day).format('MM') &&
+                today.format('DD') === moment(betDay.day).format('DD'))),
         );
 
         const betDaysFaults: Partial<BetDaysEntity>[] = [];
@@ -96,7 +102,12 @@ export class TrainingBetsService {
               );
 
               if (participantFault) participantFault.faults += 1;
-              else participantsFaults.push({ id: participant.id, faults: 1 });
+              else
+                participantsFaults.push({
+                  id: participant.id,
+                  faults: 1,
+                  user: participant.user,
+                });
 
               // adiciona uma falha ao total do dia
               const betDayFault = betDaysFaults.find(
@@ -122,7 +133,7 @@ export class TrainingBetsService {
 
           await this.participantsService.update(participant.id, participant);
 
-          // Atualiza as derrotas totais do Usuário
+          // Atualiza as derrotas e faltas totais do Usuário
           await this.validateUserLosses(participant.user.id);
           await this.validateUserTotalFaults(participant.user.id);
         }
@@ -146,14 +157,18 @@ export class TrainingBetsService {
           moment(trainingBet.initialDate).isBefore(todayFormat) &&
           moment(trainingBet.finalDate).isAfter(todayFormat);
 
-        if (inProgress && completed) status = 'Encerrada';
+        if (completed) status = 'Encerrada';
         else if (inProgress) status = 'Em Andamento';
 
         if (status !== trainingBet.status)
           await this.trainingBetRepository.update(trainingBet.id, { status });
-
-        await this.validateUserWins();
       }
+
+      // Atualiza as vitórias do Usuário
+      await this.validateUserWins();
+
+      // Atualiza a pontuação geral dos Usuários
+      await this.rankingService.updateStatisticsRanking();
 
       if (betId) logMessage = `Apostas ${betId} foi atualizada`;
     } catch (e) {
@@ -186,12 +201,12 @@ export class TrainingBetsService {
       const usersWins: { id: number; wins: number }[] = [];
       for (const trainingBet of trainingBetsClosed) {
         trainingBet.participants.forEach((participant) => {
-          if (participant.declassified === false) {
-            const userId = participant.user.id;
+          const userId = participant.user.id;
+          usersWins.push({ id: userId, wins: 0 });
 
+          if (participant.declassified === false) {
             const userWins = usersWins.find((i) => i.id === userId);
             if (userWins) userWins.wins++;
-            else usersWins.push({ id: userId, wins: 1 });
           }
         });
       }
@@ -221,7 +236,7 @@ export class TrainingBetsService {
         .where('traningBet.status IN (:...statuses)', {
           statuses: ['Encerrada', 'Em Andamento'],
         })
-        .andWhere('user.id = :userId', { userId })
+        .andWhere('participants.user.id = :userId', { userId })
         .getMany();
 
       /**

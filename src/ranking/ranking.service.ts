@@ -1,5 +1,4 @@
 import { Repository } from 'typeorm';
-import { Cron } from '@nestjs/schedule';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { RankingEntity } from './entities/ranking.entity';
@@ -26,7 +25,6 @@ export class RankingService {
     private systemLogsService: SystemLogsService,
   ) {}
 
-  @Cron('5 0 * * *') // Executa todo dia às 00:05
   async updateStatisticsRanking(userId?: number) {
     let logMessage = 'Estatísticas dos Usuários atualizadas';
     try {
@@ -46,7 +44,7 @@ export class RankingService {
       const scores = await Promise.all(
         users.map(async (user) => ({
           userId: user.id,
-          score: await this.calculateUserScore(user.id),
+          score: await this.calculateUserScore(user),
         })),
       );
 
@@ -72,21 +70,18 @@ export class RankingService {
     }
   }
 
-  private async calculateUserScore(userId: number): Promise<number> {
+  private async calculateUserScore(user: UsersEntity): Promise<number> {
     // Dados do usuário
-    const user = await this.usersRepository.findOneOrFail({
-      where: { id: userId },
-    });
     const { wins, losses, totalFaults } = user;
 
     // Total de apostas participadas
     const betsParticipated = await this.participantsRepository.count({
-      where: { user: { id: userId } },
+      where: { user: { id: user.id } },
     });
 
     // Total de dias treinados
     const trainingDays = await this.trainingReleasesRepository.count({
-      where: { participant: { user: { id: userId } } },
+      where: { participant: { user: { id: user.id } } },
     });
 
     // Cálculo da pontuação
@@ -109,7 +104,19 @@ export class RankingService {
   async findAll() {
     try {
       return await this.rankingRepository.find({
-        order: {},
+        order: { score: 'DESC' },
+        relations: { user: true },
+        select: {
+          id: true,
+          score: true,
+          user: {
+            name: true,
+            wins: true,
+            losses: true,
+            totalFaults: true,
+            profileImagePath: true,
+          },
+        },
       });
     } catch (e) {
       throw e;

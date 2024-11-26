@@ -1,3 +1,4 @@
+import { TrainingTypeEnum } from '../enum/training-type.enum';
 import { IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
 
 export class CreateTrainingReleasesDto {
@@ -10,8 +11,8 @@ export class CreateTrainingReleasesDto {
   betDayId: number;
 
   @IsString()
-  @IsNotEmpty({ message: 'Tipo de treino não informado' })
-  trainingType: string;
+  @IsNotEmpty({ message: 'Tipo de treino inválido' })
+  trainingType: TrainingTypeEnum;
 
   @IsString()
   @IsOptional()

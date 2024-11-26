@@ -8,6 +8,7 @@ import {
   UpdateDateColumn,
   PrimaryGeneratedColumn,
 } from 'typeorm';
+import { TrainingTypeEnum } from '../enum/training-type.enum';
 import { BetDaysEntity } from '../../bet-days/entities/bet-days.entity';
 import { ParticipantsEntity } from '../../participants/entities/participants.entity';
 
@@ -16,24 +17,13 @@ export class TrainingReleasesEntity {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({
-    type: 'enum',
-    enum: [
-      'Musculação',
-      'Corrida',
-      'Caminhada',
-      'Luta',
-      'Natação',
-      'Ciclismo',
-      'Outros',
-    ],
-  })
+  @Column({ type: 'enum', enum: TrainingTypeEnum })
   trainingType: string;
 
-  @Column()
+  @Column({ default: '' })
   comment: string;
 
-  @Column()
+  @Column({ default: '' })
   imagePath: string;
 
   @ManyToOne(

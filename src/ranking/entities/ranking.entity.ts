@@ -6,6 +6,7 @@ import {
   UpdateDateColumn,
   DeleteDateColumn,
   PrimaryGeneratedColumn,
+  JoinColumn,
 } from 'typeorm';
 import { UsersEntity } from '../../users/entities/users.entity';
 
@@ -17,7 +18,11 @@ export class RankingEntity {
   @Column({ default: 0 })
   score: number;
 
+  @Column()
+  userId: number;
+
   @OneToOne(() => UsersEntity, (user) => user.ranking)
+  @JoinColumn({ name: 'userId' })
   user: UsersEntity;
 
   @CreateDateColumn({ type: 'timestamp' })

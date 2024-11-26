@@ -39,7 +39,7 @@ import { TrainingReleasesModule } from './training-releases/training-releases.mo
       username: process.env.DB_USERNAME,
       port: parseInt(process.env.DB_PORT),
       entities: [__dirname + '/**/*.entity{.ts,.js}'],
-      synchronize: process.env.NODE_ENV !== 'production',
+      synchronize: false && process.env.NODE_ENV !== 'production',
     }),
     ScheduleModule.forRoot(),
     ConfigModule.forRoot({ isGlobal: true, envFilePath: '.env' }),
