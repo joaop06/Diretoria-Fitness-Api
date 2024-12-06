@@ -103,7 +103,7 @@ export class RankingService {
 
   async findAll() {
     try {
-      return await this.rankingRepository.find({
+      const result = await this.rankingRepository.find({
         order: { score: 'DESC' },
         relations: { user: true },
         select: {
@@ -118,6 +118,8 @@ export class RankingService {
           },
         },
       });
+
+      return { result };
     } catch (e) {
       throw e;
     }
