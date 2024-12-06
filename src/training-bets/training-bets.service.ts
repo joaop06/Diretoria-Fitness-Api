@@ -519,7 +519,47 @@ export class TrainingBetsService {
     try {
       return await this.trainingBetRepository.findOne({
         where: { id },
-        relations: ['betDays', 'betDays.trainingReleases', 'participants'],
+        relations: [
+          'participants',
+          'participants.user',
+          'betDays',
+          'betDays.trainingReleases',
+          'betDays.trainingReleases.participant',
+          'betDays.trainingReleases.participant.user',
+        ],
+        select: {
+          participants: {
+            id: true,
+            user: {
+              id: true,
+              name: true,
+            }
+          },
+          betDays: {
+            id: true,
+            day: true,
+            name: true,
+            totalFaults: true,
+            utilization: true,
+            trainingReleases: {
+              id: true,
+              comment: true,
+              imagePath: true,
+              trainingType: true,
+              participant: {
+                id: true,
+                faults: true,
+                utilization: true,
+                declassified: true,
+                user: {
+                  id: true,
+                  name: true,
+                  profileImagePath: true,
+                }
+              },
+            }
+          },
+        }
       });
     } catch (e) {
       this.logger.error(e);
