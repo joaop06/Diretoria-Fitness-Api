@@ -34,7 +34,7 @@ export class TrainingBetsService {
   }
 
   // @Timeout(1) // homolog
-  @Cron('1 0 * * *') // Executa todo dia às 00:01
+  @Cron('0 0 * * *') // Executa todo dia às 00:00
   async updateStatisticsBets(betId?: number) {
     let logMessage = 'Estatísticas das Apostas atualizadas';
     try {
@@ -154,8 +154,9 @@ export class TrainingBetsService {
         const todayFormat = today.format('YYYY-MM-DD');
         const completed = trainingBet.betDays.length === betDaysComplete.length;
         const inProgress =
-          moment(trainingBet.initialDate).isBefore(todayFormat) &&
-          moment(trainingBet.finalDate).isAfter(todayFormat);
+          moment(trainingBet.finalDate).isAfter(todayFormat) &&
+          (trainingBet.initialDate === todayFormat ||
+            moment(trainingBet.initialDate).isBefore(todayFormat));
 
         if (completed) status = 'Encerrada';
         else if (inProgress) status = 'Em Andamento';
@@ -533,7 +534,7 @@ export class TrainingBetsService {
             user: {
               id: true,
               name: true,
-            }
+            },
           },
           betDays: {
             id: true,
@@ -555,11 +556,11 @@ export class TrainingBetsService {
                   id: true,
                   name: true,
                   profileImagePath: true,
-                }
+                },
               },
-            }
+            },
           },
-        }
+        },
       });
     } catch (e) {
       this.logger.error(e);

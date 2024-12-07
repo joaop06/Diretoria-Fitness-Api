@@ -19,10 +19,10 @@ export class TrainingBetEntity {
   duration: number;
 
   @Column({ type: 'date' })
-  initialDate: Date;
+  initialDate: Date | string;
 
   @Column({ type: 'date' })
-  finalDate: Date;
+  finalDate: Date | string;
 
   @Column()
   faultsAllowed: number;
