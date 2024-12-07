@@ -552,9 +552,13 @@ export class TrainingBetsService {
       result.betDays = result.betDays.map((day) => {
         day.trainingReleases = day.trainingReleases.map((training) => {
           training.imagePath = readFiles(training.imagePath);
-          training.participant.user.profileImagePath = readFiles(
-            training.participant.user.profileImagePath,
-          );
+
+          if (training?.participant?.user?.profileImagePath) {
+            training.participant.user.profileImagePath = readFiles(
+              training.participant.user.profileImagePath,
+            );
+          }
+
           return training;
         });
 
