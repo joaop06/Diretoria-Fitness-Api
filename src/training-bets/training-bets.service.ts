@@ -5,6 +5,7 @@ import * as moment from 'moment';
 import { Cron } from '@nestjs/schedule';
 import { Repository, Not } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
+import { readFiles } from '../../helper/read.files';
 import { Injectable, Logger } from '@nestjs/common';
 import { UsersService } from '../users/users.service';
 import { RankingService } from '../ranking/ranking.service';
@@ -336,24 +337,6 @@ export class TrainingBetsService {
         'A aposta não pode ser agendada para a data atual ou anterior',
       );
     }
-
-    // if (now.format('YYYY-MM-DD') == initialDateMoment.format('YYYY-MM-DD')) {
-    //   throw new Error(
-    //     'A aposta precisa ser cadastrada com pelo menos 1 dia de antecedência',
-    //   );
-    // }
-
-    // if (initialDateMoment.isBefore(now, 'day')) {
-    //   throw new Error('A data da aposta não pode ser no passado');
-    // }
-
-    // const hoursDifference = initialDateMoment.diff(now, 'hours');
-
-    // if (hoursDifference < 12) {
-    //   throw new Error(
-    //     'A aposta precisa ser cadastrada com pelo menos 12 horas de antecedência',
-    //   );
-    // }
   }
 
   #defineDuration(object: Partial<TrainingBetEntity>) {
@@ -518,7 +501,7 @@ export class TrainingBetsService {
 
   async findOne(id: number): Promise<TrainingBetEntity> {
     try {
-      return await this.trainingBetRepository.findOne({
+      const result = await this.trainingBetRepository.findOne({
         where: { id },
         relations: [
           'participants',
@@ -562,6 +545,23 @@ export class TrainingBetsService {
           },
         },
       });
+
+      /**
+       * Faz a Leitura das imagens de treinos e dos usuários
+       */
+      result.betDays = result.betDays.map((day) => {
+        day.trainingReleases = day.trainingReleases.map((training) => {
+          training.imagePath = readFiles(training.imagePath);
+          training.participant.user.profileImagePath = readFiles(
+            training.participant.user.profileImagePath,
+          );
+          return training;
+        });
+
+        return day;
+      });
+
+      return result;
     } catch (e) {
       this.logger.error(e);
       throw e;
