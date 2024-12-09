@@ -107,4 +107,12 @@ export class TrainingReleasesService {
       throw e;
     }
   }
+
+  async delete(id: number): Promise<any> {
+    try {
+      return await this.trainingReleasesRepository.delete(id);
+    } catch (e) {
+      throw e;
+    }
+  }
 }
