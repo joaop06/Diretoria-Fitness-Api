@@ -1,7 +1,13 @@
 import { Type } from 'class-transformer';
-import { FindManyOptions } from 'typeorm';
+import { FindManyOptions, Entity } from 'typeorm';
 import { BadRequestException } from '@nestjs/common';
 import { IsNumber, IsOptional, IsObject, validateSync } from 'class-validator';
+
+function buildOptions(object: object) {
+    return new FindOptionsDto(object);
+}
+
+export { buildOptions };
 
 export class FindReturnModelDto<T> {
     rows: T[];

@@ -9,4 +9,7 @@ export class UpdateStatisticsUserDto {
 
   @IsNumber()
   totalFaults?: number;
+
+  @IsNumber()
+  totalTrainingDays?: number;
 }

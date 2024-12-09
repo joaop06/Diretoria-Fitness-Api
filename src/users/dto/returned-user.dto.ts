@@ -29,6 +29,9 @@ export class ReturnedUserDto {
   @IsNumber()
   totalFaults: number;
 
+  @IsNumber()
+  totalTrainingDays: number;
+
   @IsDateString()
   createdAt: Date;
 

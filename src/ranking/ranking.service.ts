@@ -85,18 +85,18 @@ export class RankingService {
     });
 
     // Cálculo da pontuação
-    const PesoV = 10,
-      PesoD = 5,
-      PesoF = 2,
-      PesoAP = 3,
-      PesoDT = 1;
+    const weightWin = 10, // Peso da vitória
+      weightLoss = 5, // Peso da derrota
+      weightFault = 2, // Peso da falha
+      weightParticipant = 3, // Peso da participação
+      weightTrainingDay = 1; // Peso do dia de treino
 
     const score =
-      wins * PesoV -
-      losses * PesoD -
-      totalFaults * PesoF +
-      betsParticipated * PesoAP +
-      trainingDays * PesoDT;
+      wins * weightWin -
+      losses * weightLoss -
+      totalFaults * weightFault +
+      betsParticipated * weightParticipant +
+      trainingDays * weightTrainingDay;
 
     return score;
   }

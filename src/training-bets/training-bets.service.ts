@@ -15,8 +15,12 @@ import { BetDaysEntity } from '../bet-days/entities/bet-days.entity';
 import { CreateTrainingBetDto } from './dto/create-training-bet.dto';
 import { SystemLogsService } from '../system-logs/system-logs.service';
 import { ParticipantsService } from '../participants/participants.service';
-import { FindOptionsDto, FindReturnModelDto } from '../../public/dto/find.dto';
 import { ParticipantsEntity } from '../participants/entities/participants.entity';
+import {
+  buildOptions,
+  FindOptionsDto,
+  FindReturnModelDto,
+} from '../../public/dto/find.dto';
 
 @Injectable()
 export class TrainingBetsService {
@@ -34,7 +38,7 @@ export class TrainingBetsService {
     this.logger = new Logger();
   }
 
-  // @Timeout(1) // homolog
+  // @Timeout(2000) // homolog
   @Cron('0 0 * * *') // Executa todo dia às 00:00
   async updateStatisticsBets(betId?: number) {
     let logMessage = 'Estatísticas das Apostas atualizadas';
@@ -137,6 +141,7 @@ export class TrainingBetsService {
           // Atualiza as derrotas e faltas totais do Usuário
           await this.validateUserLosses(participant.user.id);
           await this.validateUserTotalFaults(participant.user.id);
+          await this.validateUserTotalTrainingDays(participant.user.id);
         }
 
         /** Atualiza as faltas totais dos dias */
@@ -277,6 +282,25 @@ export class TrainingBetsService {
         await this.participantsService.getTotalFaultsFromUser(userId);
 
       await this.usersService.update(userId, { totalFaults });
+    } catch (e) {
+      this.logger.error(e);
+      await this.systemLogsService.create({
+        level: 'ERROR',
+        source: 'TrainingBetsService.validateUserTotalFaults',
+        message: 'Falha ao atualizar as falhas totais dos usuários',
+      });
+    }
+  }
+
+  async validateUserTotalTrainingDays(userId: number) {
+    try {
+      const options = buildOptions({ userId });
+      const allUserParticipations =
+        await this.participantsService.findAll(options);
+
+      await this.usersService.update(userId, {
+        totalTrainingDays: allUserParticipations.rows.length,
+      });
     } catch (e) {
       this.logger.error(e);
       await this.systemLogsService.create({

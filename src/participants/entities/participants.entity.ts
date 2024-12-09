@@ -19,6 +19,12 @@ export class ParticipantsEntity {
   @PrimaryGeneratedColumn()
   id: number;
 
+  @Column()
+  userId: number;
+
+  @Column()
+  trainingBetId: number;
+
   @Column({ default: 0 })
   faults: number;
 
