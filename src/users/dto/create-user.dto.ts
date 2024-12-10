@@ -1,9 +1,9 @@
 import {
-  IsString,
   IsEmail,
-  IsOptional,
-  IsDecimal,
+  IsNumber,
+  IsString,
   MinLength,
+  IsOptional,
 } from 'class-validator';
 
 export class CreateUserDto {
@@ -18,11 +18,11 @@ export class CreateUserDto {
   @MinLength(6, { message: 'A senha deve ter pelo menos 6 caracteres' })
   password: string;
 
-  @IsDecimal()
   @IsOptional()
+  @IsNumber({ maxDecimalPlaces: 1 })
   weight?: number;
 
-  @IsDecimal()
   @IsOptional()
+  @IsNumber({ maxDecimalPlaces: 2 })
   height?: number;
 }
