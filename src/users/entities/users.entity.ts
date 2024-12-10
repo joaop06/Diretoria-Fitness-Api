@@ -28,12 +28,17 @@ export class UsersEntity {
   @Column({ nullable: false })
   password: string;
 
+  /**
+   * Ex: 123.4
+   * precision -> Total de Dígitos: 4
+   * scale: -> Casas decimais: 1
+   */
   @Transform(({ value }) => parseFloat(value))
-  @Column({ type: 'decimal', default: 0.0 })
+  @Column('decimal', { precision: 4, scale: 1, default: 0.0 })
   weight: number;
 
   @Transform(({ value }) => parseFloat(value))
-  @Column({ type: 'decimal', default: 0.0 })
+  @Column('decimal', { precision: 3, scale: 2, default: 0.00 })
   height: number;
 
   @Column({ default: 0 })

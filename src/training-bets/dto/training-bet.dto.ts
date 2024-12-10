@@ -16,7 +16,7 @@ export class TrainingBetDto {
   @IsNumber()
   faultsAllowed: number;
 
-  @IsNumber()
+  @IsNumber({ maxDecimalPlaces: 2 })
   minimumPenaltyAmount: number;
 
   @IsDateString()

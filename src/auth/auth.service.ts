@@ -5,13 +5,14 @@ import { Injectable } from '@nestjs/common';
 import { plainToClass } from 'class-transformer';
 import { UsersService } from '../users/users.service';
 import { UsersEntity } from '../users/entities/users.entity';
+import { readFiles } from 'helper/read.files';
 
 @Injectable()
 export class AuthService {
   constructor(
     private usersService: UsersService,
     private jwtService: JwtService,
-  ) {}
+  ) { }
 
   async validateUser(object: LoginDto) {
     const { email, password } = object;
@@ -28,8 +29,12 @@ export class AuthService {
   async login(user: UsersEntity) {
     const payload = { email: user.email, sub: user.id };
 
+    // Leitura da foto de perfil
+    const userResult = plainToClass(UsersEntity, user);
+    userResult.profileImagePath = readFiles(userResult.profileImagePath);
+
     return {
-      user: plainToClass(UsersEntity, user),
+      user: userResult,
       message: 'Login realizado com sucesso!',
       accessToken: this.jwtService.sign(payload),
     };

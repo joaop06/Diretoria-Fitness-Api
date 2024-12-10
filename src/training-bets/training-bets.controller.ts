@@ -1,3 +1,4 @@
+import { plainToClass } from 'class-transformer';
 import { TrainingBetsService } from './training-bets.service';
 import { TrainingBetEntity } from './entities/training-bet.entity';
 import { CreateTrainingBetDto } from './dto/create-training-bet.dto';
@@ -16,7 +17,7 @@ import {
 
 @Controller('training-bets')
 export class TrainingBetsController {
-  constructor(private readonly trainingBetService: TrainingBetsService) {}
+  constructor(private readonly trainingBetService: TrainingBetsService) { }
 
   @Post()
   async create(
@@ -55,7 +56,9 @@ export class TrainingBetsController {
   @Get(':id')
   async findOne(@Param('id') id: string): Promise<TrainingBetEntity> {
     try {
-      return await this.trainingBetService.findOne(+id);
+      const trainingBet = await this.trainingBetService.findOne(+id);
+      return plainToClass(TrainingBetEntity, trainingBet);
+
     } catch (e) {
       const message = `Falha ao buscar aposta: ${e.message}`;
       new Exception({ ...e, message });
@@ -67,7 +70,10 @@ export class TrainingBetsController {
     @Query() options: FindOptionsDto<TrainingBetEntity>,
   ): Promise<FindReturnModelDto<TrainingBetEntity>> {
     try {
-      return await this.trainingBetService.findAll(options);
+      const trainingBets = await this.trainingBetService.findAll(options);
+      trainingBets.rows = trainingBets.rows.map(trainingBet => plainToClass(TrainingBetEntity, trainingBet));
+
+      return trainingBets;
     } catch (e) {
       new Exception(e);
     }

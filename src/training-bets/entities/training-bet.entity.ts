@@ -7,6 +7,7 @@ import {
   UpdateDateColumn,
   PrimaryGeneratedColumn,
 } from 'typeorm';
+import { Transform } from 'class-transformer';
 import { BetDaysEntity } from '../../bet-days/entities/bet-days.entity';
 import { ParticipantsEntity } from '../../participants/entities/participants.entity';
 
@@ -27,7 +28,8 @@ export class TrainingBetEntity {
   @Column()
   faultsAllowed: number;
 
-  @Column({ default: 0.0, nullable: false })
+  @Transform(({ value }) => parseFloat(value))
+  @Column('decimal', { precision: 10, scale: 2, default: 0.00 })
   minimumPenaltyAmount: number;
 
   @Column({

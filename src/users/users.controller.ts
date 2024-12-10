@@ -32,15 +32,15 @@ if (!fs.existsSync(uploadDir)) {
 
 @Controller('users')
 export class UsersController {
-  constructor(private readonly usersService: UsersService) {}
+  constructor(private readonly usersService: UsersService) { }
 
   @Post()
   @Public()
   async create(@Body() object: CreateUserDto): Promise<UsersEntity> {
     try {
       const user = await this.usersService.create(object);
-
       return plainToClass(UsersEntity, user);
+
     } catch (e) {
       new Exception(e);
     }

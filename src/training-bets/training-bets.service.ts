@@ -538,6 +538,7 @@ export class TrainingBetsService {
         select: {
           participants: {
             id: true,
+            declassified: true,
             user: {
               id: true,
               name: true,
