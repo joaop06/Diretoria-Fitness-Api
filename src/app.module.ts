@@ -15,6 +15,7 @@ import { UsersModule } from './users/users.module';
 import { JwtAuthGuard } from './auth/jwt/jwt-auth-guard';
 import { RankingModule } from './ranking/ranking.module';
 import { BetDaysModule } from './bet-days/bet-days.module';
+import { CronJobsModule } from './cron-jobs/cron-jobs.module';
 import { SystemLogsModule } from './system-logs/system-logs.module';
 import { ParticipantsModule } from './participants/participants.module';
 import { TrainingBetsModule } from './training-bets/training-bets.module';
@@ -47,6 +48,7 @@ import { TrainingReleasesModule } from './training-releases/training-releases.mo
       serveRoot: '/uploads', // Prefixo da URL
       rootPath: '../public/imagesReleases', // Caminho da pasta de uploads
     }),
+    CronJobsModule,
   ],
   controllers: [AppController],
   providers: [AppService, { provide: APP_GUARD, useClass: JwtAuthGuard }],

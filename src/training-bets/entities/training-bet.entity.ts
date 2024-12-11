@@ -8,6 +8,7 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { Transform } from 'class-transformer';
+import { StatusEnum } from '../enum/status.enum';
 import { BetDaysEntity } from '../../bet-days/entities/bet-days.entity';
 import { ParticipantsEntity } from '../../participants/entities/participants.entity';
 
@@ -29,15 +30,15 @@ export class TrainingBetEntity {
   faultsAllowed: number;
 
   @Transform(({ value }) => parseFloat(value))
-  @Column('decimal', { precision: 10, scale: 2, default: 0.00 })
+  @Column('decimal', { precision: 10, scale: 2, default: 0.0 })
   minimumPenaltyAmount: number;
 
   @Column({
     type: 'enum',
-    default: 'Agendada',
-    enum: ['Encerrada', 'Em Andamento', 'Agendada'],
+    enum: StatusEnum,
+    default: StatusEnum.AGENDADA,
   })
-  status: 'Encerrada' | 'Em Andamento' | 'Agendada';
+  status: StatusEnum;
 
   @OneToMany(() => ParticipantsEntity, (participant) => participant.trainingBet)
   participants: ParticipantsEntity[];

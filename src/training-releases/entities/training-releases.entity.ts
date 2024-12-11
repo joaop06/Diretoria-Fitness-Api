@@ -18,7 +18,7 @@ export class TrainingReleasesEntity {
   id: number;
 
   @Column({ type: 'enum', enum: TrainingTypeEnum })
-  trainingType: string;
+  trainingType: TrainingTypeEnum;
 
   @Column({ default: '' })
   comment: string;

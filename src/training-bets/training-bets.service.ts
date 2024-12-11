@@ -2,20 +2,18 @@ import * as dotenv from 'dotenv';
 dotenv.config();
 
 import * as moment from 'moment';
-import { Cron } from '@nestjs/schedule';
-import { Repository, Not } from 'typeorm';
+import { StatusEnum } from './enum/status.enum';
 import { InjectRepository } from '@nestjs/typeorm';
 import { readFiles } from '../../helper/read.files';
 import { Injectable, Logger } from '@nestjs/common';
 import { UsersService } from '../users/users.service';
-import { RankingService } from '../ranking/ranking.service';
+import { Repository, FindManyOptions } from 'typeorm';
 import { BetDaysService } from '../bet-days/bet-days.service';
 import { TrainingBetEntity } from './entities/training-bet.entity';
-import { BetDaysEntity } from '../bet-days/entities/bet-days.entity';
 import { CreateTrainingBetDto } from './dto/create-training-bet.dto';
 import { SystemLogsService } from '../system-logs/system-logs.service';
 import { ParticipantsService } from '../participants/participants.service';
-import { ParticipantsEntity } from '../participants/entities/participants.entity';
+import { LevelEnum as LogLevelEnum } from '../system-logs/enum/log-level.enum';
 import {
   buildOptions,
   FindOptionsDto,
@@ -29,172 +27,20 @@ export class TrainingBetsService {
   constructor(
     @InjectRepository(TrainingBetEntity)
     private trainingBetRepository: Repository<TrainingBetEntity>,
+
     private usersService: UsersService,
     private betDaysService: BetDaysService,
-    private rankingService: RankingService,
     private systemLogsService: SystemLogsService,
     private participantsService: ParticipantsService,
   ) {
     this.logger = new Logger();
   }
 
-  // @Timeout(2000) // homolog
-  @Cron('0 0 * * *') // Executa todo dia às 00:00
-  async updateStatisticsBets(betId?: number) {
-    let logMessage = 'Estatísticas das Apostas atualizadas';
-    try {
-      /**
-       * Buscar dias da aposta
-       *
-       * Para cada dia concluído (dias anteriores) da aposta,
-       * Verificar se o participante possui treino:
-       *  - Atualizar participante com a quantidade de faltas
-       *      - Se faltas > permitidas, está desclassificado
-       *
-       *  - Atualizar Dia da aposta com a quantidade de faltas total dos participantes e o aproveitamento (% de participantes que treinou)
-       *
-       *
-       * Se a quantidade de dias concluídos for igual a duração, a aposta está completa
-       */
-      const trainingBets: TrainingBetEntity[] = [];
-      if (betId) {
-        const trainingBet = await this.findOne(betId);
-        trainingBets.push(trainingBet);
-      } else {
-        const bets = await this.trainingBetRepository.find({
-          where: { status: Not('Encerrada') },
-          relations: [
-            'betDays',
-            'betDays.trainingReleases',
-            'participants',
-            'participants.user',
-            'participants.trainingReleases',
-            'participants.trainingReleases.betDay',
-          ],
-        });
-        trainingBets.push(...bets);
-      }
-
-      const today = moment();
-      for (const trainingBet of trainingBets) {
-        const { faultsAllowed, betDays, participants } = trainingBet;
-        const betDaysComplete = betDays.filter(
-          (betDay) =>
-            today.startOf('day').isAfter(moment(betDay.day)) &&
-            (today.format('DD') !== moment(betDay.day).format('DD') ||
-              (today.format('MM') !== moment(betDay.day).format('MM') &&
-                today.format('DD') === moment(betDay.day).format('DD'))),
-        );
-
-        const betDaysFaults: Partial<BetDaysEntity>[] = [];
-        const participantsFaults: Partial<ParticipantsEntity>[] = [];
-
-        betDaysComplete.forEach((betDay) => {
-          betDaysFaults.push({ id: betDay.id, totalFaults: 0 });
-
-          /** Verifica os participantes que não treinaram */
-          participants.forEach((participant) => {
-            // Busca nos treinos pelo participante e o dia atual
-            const participantTraining = participant?.trainingReleases?.find(
-              (item) => item.betDay.id === betDay.id,
-            );
-
-            /** Se o participante não treinou */
-            if (!participantTraining) {
-              // adiciona uma falha para o participante
-              const participantFault = participantsFaults.find(
-                (item) => item.id === participant.id,
-              );
-
-              if (participantFault) participantFault.faults += 1;
-              else
-                participantsFaults.push({
-                  id: participant.id,
-                  faults: 1,
-                  user: participant.user,
-                });
-
-              // adiciona uma falha ao total do dia
-              const betDayFault = betDaysFaults.find(
-                (item) => item.id === betDay.id,
-              );
-
-              if (betDayFault) betDayFault.totalFaults += 1;
-            }
-          });
-        });
-
-        /** Atualiza as faltas dos participantes */
-        for (const participant of participantsFaults) {
-          // Desclassificado caso exceder a quantidade de faltas permitidas
-          participant.declassified = participant.faults > faultsAllowed;
-
-          // Calcula o aproveitamento em percentual
-          participant.utilization = parseFloat(
-            (100 - (participant.faults / betDaysComplete.length) * 100).toFixed(
-              2,
-            ),
-          );
-
-          await this.participantsService.update(participant.id, participant);
-
-          // Atualiza as derrotas e faltas totais do Usuário
-          await this.validateUserLosses(participant.user.id);
-          await this.validateUserTotalFaults(participant.user.id);
-          await this.validateUserTotalTrainingDays(participant.user.id);
-        }
-
-        /** Atualiza as faltas totais dos dias */
-        for (const betDay of betDaysFaults) {
-          // Calcula o aproveitamento em percentual
-          const utilization = parseFloat(
-            (100 - (betDay.totalFaults / participants.length) * 100).toFixed(2),
-          );
-          betDay.utilization = isNaN(utilization) ? 0 : utilization;
-
-          await this.betDaysService.update(betDay.id, betDay);
-        }
-
-        let status = trainingBet.status;
-
-        const todayFormat = today.format('YYYY-MM-DD');
-        const completed = trainingBet.betDays.length === betDaysComplete.length;
-        const inProgress =
-          moment(trainingBet.finalDate).isAfter(todayFormat) &&
-          (trainingBet.initialDate === todayFormat ||
-            moment(trainingBet.initialDate).isBefore(todayFormat));
-
-        if (completed) status = 'Encerrada';
-        else if (inProgress) status = 'Em Andamento';
-
-        if (status !== trainingBet.status)
-          await this.trainingBetRepository.update(trainingBet.id, { status });
-      }
-
-      // Atualiza as vitórias do Usuário
-      await this.validateUserWins();
-
-      // Atualiza a pontuação geral dos Usuários
-      await this.rankingService.updateStatisticsRanking();
-
-      if (betId) logMessage = `Apostas ${betId} foi atualizada`;
-    } catch (e) {
-      this.logger.error(e);
-      logMessage = e.message;
-    } finally {
-      // Registro de sincronização
-      await this.systemLogsService.create({
-        message: logMessage,
-        source: 'TrainingBetsService.updateStatistics',
-      });
-    }
-  }
-
   async validateUserWins() {
     try {
       const trainingBetsClosed = await this.trainingBetRepository.find({
         where: {
-          status: 'Encerrada',
+          status: StatusEnum.ENCERRADA,
         },
         relations: {
           participants: { user: true },
@@ -223,8 +69,8 @@ export class TrainingBetsService {
       );
     } catch (e) {
       this.logger.error(e);
-      await this.systemLogsService.create({
-        level: 'ERROR',
+      await this.systemLogsService.upsert({
+        level: LogLevelEnum.ERROR,
         source: 'TrainingBetsService.updateUserWins',
         message: 'Falha ao atualizar os ganhos dos usuários',
       });
@@ -268,8 +114,8 @@ export class TrainingBetsService {
       );
     } catch (e) {
       this.logger.error(e);
-      await this.systemLogsService.create({
-        level: 'ERROR',
+      await this.systemLogsService.upsert({
+        level: LogLevelEnum.ERROR,
         source: 'TrainingBetsService.updateUserLosses',
         message: 'Falha ao atualizar as derrotas dos usuários',
       });
@@ -284,8 +130,8 @@ export class TrainingBetsService {
       await this.usersService.update(userId, { totalFaults });
     } catch (e) {
       this.logger.error(e);
-      await this.systemLogsService.create({
-        level: 'ERROR',
+      await this.systemLogsService.upsert({
+        level: LogLevelEnum.ERROR,
         source: 'TrainingBetsService.validateUserTotalFaults',
         message: 'Falha ao atualizar as falhas totais dos usuários',
       });
@@ -303,8 +149,8 @@ export class TrainingBetsService {
       });
     } catch (e) {
       this.logger.error(e);
-      await this.systemLogsService.create({
-        level: 'ERROR',
+      await this.systemLogsService.upsert({
+        level: LogLevelEnum.ERROR,
         source: 'TrainingBetsService.validateUserTotalFaults',
         message: 'Falha ao atualizar as falhas totais dos usuários',
       });
@@ -598,7 +444,9 @@ export class TrainingBetsService {
   }
 
   async findAll(
-    options: FindOptionsDto<TrainingBetEntity>,
+    options:
+      | FindOptionsDto<TrainingBetEntity>
+      | FindManyOptions<TrainingBetEntity>,
   ): Promise<FindReturnModelDto<TrainingBetEntity>> {
     const [rows, count] =
       await this.trainingBetRepository.findAndCount(options);

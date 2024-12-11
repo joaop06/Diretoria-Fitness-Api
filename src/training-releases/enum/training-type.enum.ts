@@ -1,9 +1,9 @@
 export enum TrainingTypeEnum {
-  MUSCULACAO = 'Musculação',
-  CORRIDA = 'Corrida',
-  CAMINHADA = 'Caminhada',
   LUTA = 'Luta',
+  OUTROS = 'Outros',
+  CORRIDA = 'Corrida',
   NATACAO = 'Natação',
   CICLISMO = 'Ciclismo',
-  OUTROS = 'Outros',
+  CAMINHADA = 'Caminhada',
+  MUSCULACAO = 'Musculação',
 }

@@ -1,11 +1,12 @@
 import {
   Column,
   Entity,
-  PrimaryGeneratedColumn,
   CreateDateColumn,
   UpdateDateColumn,
   DeleteDateColumn,
+  PrimaryGeneratedColumn,
 } from 'typeorm';
+import { LevelEnum } from '../enum/log-level.enum';
 
 @Entity('system_logs')
 export class SystemLogEntity {
@@ -15,8 +16,12 @@ export class SystemLogEntity {
   @Column()
   message: string;
 
-  @Column({ type: 'enum', enum: ['INFO', 'WARN', 'ERROR'] })
-  level: string;
+  @Column({
+    type: 'enum',
+    enum: LevelEnum,
+    default: LevelEnum.INFO,
+  })
+  level: LevelEnum;
 
   @Column({ nullable: true })
   source: string; // Opcional, pode armazenar o módulo ou origem do log

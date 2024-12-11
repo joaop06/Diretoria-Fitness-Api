@@ -32,7 +32,7 @@ if (!fs.existsSync(uploadDir)) {
 
 @Controller('users')
 export class UsersController {
-  constructor(private readonly usersService: UsersService) { }
+  constructor(private readonly usersService: UsersService) {}
 
   @Post()
   @Public()
@@ -40,7 +40,6 @@ export class UsersController {
     try {
       const user = await this.usersService.create(object);
       return plainToClass(UsersEntity, user);
-
     } catch (e) {
       new Exception(e);
     }

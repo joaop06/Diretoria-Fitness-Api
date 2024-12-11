@@ -3,11 +3,10 @@ import * as moment from 'moment';
 import { Repository } from 'typeorm';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { RankingService } from '../ranking/ranking.service';
 import { BetDaysService } from '../bet-days/bet-days.service';
+import { CronJobsService } from '../cron-jobs/cron-jobs.service';
 import { UploadTrainingFileDto } from './dto/upload-training-file.dto';
 import { ParticipantsService } from '../participants/participants.service';
-import { TrainingBetsService } from '../training-bets/training-bets.service';
 import { TrainingReleasesEntity } from './entities/training-releases.entity';
 import { CreateTrainingReleasesDto } from './dto/create-training-release.dto';
 import { FindOptionsDto, FindReturnModelDto } from '../../public/dto/find.dto';
@@ -17,9 +16,9 @@ export class TrainingReleasesService {
   constructor(
     @InjectRepository(TrainingReleasesEntity)
     private trainingReleasesRepository: Repository<TrainingReleasesEntity>,
+
     private betDaysService: BetDaysService,
-    private rankingService: RankingService,
-    private trainingBetService: TrainingBetsService,
+    private cronJobsService: CronJobsService,
     private participantsService: ParticipantsService,
   ) {}
 
@@ -59,12 +58,12 @@ export class TrainingReleasesService {
 
       /** Atualiza estatísticas da Aposta */
       const { id: betId } = participant.trainingBet;
-      this.trainingBetService.updateStatisticsBets(betId);
+      this.cronJobsService.updateStatisticsBets(betId);
 
       const {
         user: { id: userId },
       } = participant;
-      this.rankingService.updateStatisticsRanking(userId);
+      this.cronJobsService.updateStatisticsRanking(userId);
 
       return result;
     } catch (e) {

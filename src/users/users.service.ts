@@ -6,6 +6,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { UsersEntity } from './entities/users.entity';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { FindReturnModelDto } from 'public/dto/find.dto';
 import { RankingService } from '../ranking/ranking.service';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { Exception } from '../../public/interceptors/exception.filter';
@@ -58,6 +59,11 @@ export class UsersService {
     } catch (e) {
       throw e;
     }
+  }
+
+  async findAll(): Promise<FindReturnModelDto<UsersEntity>> {
+    const [rows, count] = await this.usersRepository.findAndCount();
+    return { rows, count };
   }
 
   async findOneByEmail(email: string): Promise<UsersEntity> {

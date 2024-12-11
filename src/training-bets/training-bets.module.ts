@@ -1,7 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { UsersModule } from '../users/users.module';
-import { RankingModule } from '../ranking/ranking.module';
 import { BetDaysModule } from '../bet-days/bet-days.module';
 import { TrainingBetsService } from './training-bets.service';
 import { TrainingBetEntity } from './entities/training-bet.entity';
@@ -17,7 +16,6 @@ import { ParticipantsModule } from '../participants/participants.module';
     TypeOrmModule.forFeature([TrainingBetEntity]),
     UsersModule,
     BetDaysModule,
-    RankingModule,
     SystemLogsModule,
     ParticipantsModule,
   ],

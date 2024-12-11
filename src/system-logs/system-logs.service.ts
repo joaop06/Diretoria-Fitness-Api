@@ -14,4 +14,18 @@ export class SystemLogsService {
   async create(object: CreateSystemLogDto) {
     return await this.systemLogRepository.save(object);
   }
+
+  async upsert(object: Partial<SystemLogEntity>) {
+    const existingLog = await this.systemLogRepository.findOne({
+      where: { message: object.message, source: object.source },
+    });
+
+    if (existingLog) {
+      // Atualiza o registro existente
+      return await this.systemLogRepository.update(existingLog.id, object);
+    } else {
+      // Cria um novo registro
+      return await this.systemLogRepository.save(object);
+    }
+  }
 }

@@ -3,16 +3,16 @@ import { JwtService } from '@nestjs/jwt';
 import { LoginDto } from './dto/login.dto';
 import { Injectable } from '@nestjs/common';
 import { plainToClass } from 'class-transformer';
+import { readFiles } from '../../helper/read.files';
 import { UsersService } from '../users/users.service';
 import { UsersEntity } from '../users/entities/users.entity';
-import { readFiles } from 'helper/read.files';
 
 @Injectable()
 export class AuthService {
   constructor(
-    private usersService: UsersService,
     private jwtService: JwtService,
-  ) { }
+    private usersService: UsersService,
+  ) {}
 
   async validateUser(object: LoginDto) {
     const { email, password } = object;

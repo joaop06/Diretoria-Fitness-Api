@@ -17,7 +17,7 @@ import {
 
 @Controller('training-bets')
 export class TrainingBetsController {
-  constructor(private readonly trainingBetService: TrainingBetsService) { }
+  constructor(private readonly trainingBetService: TrainingBetsService) {}
 
   @Post()
   async create(
@@ -58,7 +58,6 @@ export class TrainingBetsController {
     try {
       const trainingBet = await this.trainingBetService.findOne(+id);
       return plainToClass(TrainingBetEntity, trainingBet);
-
     } catch (e) {
       const message = `Falha ao buscar aposta: ${e.message}`;
       new Exception({ ...e, message });
@@ -71,7 +70,9 @@ export class TrainingBetsController {
   ): Promise<FindReturnModelDto<TrainingBetEntity>> {
     try {
       const trainingBets = await this.trainingBetService.findAll(options);
-      trainingBets.rows = trainingBets.rows.map(trainingBet => plainToClass(TrainingBetEntity, trainingBet));
+      trainingBets.rows = trainingBets.rows.map((trainingBet) =>
+        plainToClass(TrainingBetEntity, trainingBet),
+      );
 
       return trainingBets;
     } catch (e) {
