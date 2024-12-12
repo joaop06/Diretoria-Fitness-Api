@@ -27,6 +27,7 @@ import { TrainingReleasesModule } from './training-releases/training-releases.mo
     UsersModule,
     BetDaysModule,
     RankingModule,
+    CronJobsModule,
     SystemLogsModule,
     ParticipantsModule,
     TrainingBetsModule,
@@ -48,7 +49,6 @@ import { TrainingReleasesModule } from './training-releases/training-releases.mo
       serveRoot: '/uploads', // Prefixo da URL
       rootPath: '../public/imagesReleases', // Caminho da pasta de uploads
     }),
-    CronJobsModule,
   ],
   controllers: [AppController],
   providers: [AppService, { provide: APP_GUARD, useClass: JwtAuthGuard }],

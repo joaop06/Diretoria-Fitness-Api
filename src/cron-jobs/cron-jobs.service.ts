@@ -34,6 +34,7 @@ export class CronJobsService {
   async keepAliveApplication() {
     try {
       await this.systemLogsService.upsert({
+        level: LogLevelEnum.ERROR,
         message: 'Refresh application',
         source: 'CronJobsService.keepAliveApplication',
       });

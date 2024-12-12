@@ -5,11 +5,13 @@ import { RankingEntity } from './entities/ranking.entity';
 import { UsersEntity } from '../users/entities/users.entity';
 import { ParticipantsEntity } from '../participants/entities/participants.entity';
 import { TrainingReleasesEntity } from '../training-releases/entities/training-releases.entity';
-import { UsersService } from '../users/users.service';
 
 @Injectable()
 export class RankingService {
   constructor(
+    @InjectRepository(UsersEntity)
+    private usersRepository: Repository<UsersEntity>,
+
     @InjectRepository(RankingEntity)
     private rankingRepository: Repository<RankingEntity>,
 
@@ -18,8 +20,6 @@ export class RankingService {
 
     @InjectRepository(TrainingReleasesEntity)
     private trainingReleasesRepository: Repository<TrainingReleasesEntity>,
-
-    private usersService: UsersService,
   ) {}
 
   async calculateUserScore(user: UsersEntity): Promise<number> {
@@ -79,7 +79,9 @@ export class RankingService {
 
   async create(userId: number) {
     try {
-      const user = await this.usersService.findOne(userId);
+      const user = await this.usersRepository.findOne({
+        where: { id: userId },
+      });
 
       const newRanking = this.rankingRepository.create({ user });
       return await this.rankingRepository.save(newRanking);
