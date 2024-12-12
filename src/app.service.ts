@@ -1,8 +1,16 @@
 import { Injectable } from '@nestjs/common';
+import { SystemLogsService } from './system-logs/system-logs.service';
 
 @Injectable()
 export class AppService {
+  constructor(private systemLogsService: SystemLogsService) {}
+
   getHello(): string {
-    return 'Hello World!';
+    const message = 'Hello World!';
+    this.systemLogsService.upsert({
+      message,
+      source: 'AppService.getHello',
+    });
+    return message;
   }
 }

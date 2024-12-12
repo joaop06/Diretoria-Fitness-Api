@@ -30,21 +30,8 @@ export class CronJobsService {
     this.logger = new Logger();
   }
 
-  @Cron('0 * * * *')
-  async keepAliveApplication() {
-    try {
-      await this.systemLogsService.upsert({
-        level: LogLevelEnum.ERROR,
-        message: 'Refresh application',
-        source: 'CronJobsService.keepAliveApplication',
-      });
-    } catch (e) {
-      console.error(`Test: ${e.message}`);
-    }
-  }
-
   // @Timeout(2000) // homolog
-  @Cron('0 0 * * *') // Executa todo dia às 00:00
+  @Cron('1 0 * * *') // Executa todo dia às 00:00
   async updateStatisticsBets(betId?: number) {
     let logLevel = LogLevelEnum.INFO;
     let logMessage = 'Estatísticas das Apostas atualizadas';
@@ -204,7 +191,7 @@ export class CronJobsService {
     }
   }
 
-  @Cron('5 * * * *')
+  @Cron('2 * * * *')
   async updateStatisticsRanking(userId?: number) {
     let logLevel = LogLevelEnum.INFO;
     let logMessage = 'Estatísticas dos Usuários atualizadas';
