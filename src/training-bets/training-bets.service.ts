@@ -384,10 +384,15 @@ export class TrainingBetsService {
         select: {
           participants: {
             id: true,
+            faults: true,
+            utilization: true,
             declassified: true,
             user: {
               id: true,
               name: true,
+              wins: true,
+              losses: true,
+              profileImagePath: true,
             },
           },
           betDays: {
@@ -418,13 +423,26 @@ export class TrainingBetsService {
       });
 
       /**
+       * Faz a Leitura das imagens dos usuários participantes
+       */
+      result.participants = result.participants.map((participant) => {
+        if (participant?.user?.profileImagePath !== undefined) {
+          participant.user.profileImagePath = readFiles(
+            participant.user.profileImagePath,
+          );
+        }
+
+        return participant;
+      });
+
+      /**
        * Faz a Leitura das imagens de treinos e dos usuários
        */
       result.betDays = result.betDays.map((day) => {
         day.trainingReleases = day.trainingReleases.map((training) => {
           training.imagePath = readFiles(training.imagePath);
 
-          if (training?.participant?.user?.profileImagePath) {
+          if (training?.participant?.user?.profileImagePath !== undefined) {
             training.participant.user.profileImagePath = readFiles(
               training.participant.user.profileImagePath,
             );

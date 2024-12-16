@@ -57,3 +57,6 @@ report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 
 # Images from Training Releases
 /public/imagesReleases
+
+# Images from Profile Users
+/public/profileImages

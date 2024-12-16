@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { readFiles } from '../../helper/read.files';
 import { FindOptionsWhere, Repository } from 'typeorm';
 import { RankingEntity } from './entities/ranking.entity';
 import { UsersEntity } from '../users/entities/users.entity';
@@ -55,7 +56,7 @@ export class RankingService {
 
   async findAll() {
     try {
-      const result = await this.rankingRepository.find({
+      const ranking = await this.rankingRepository.find({
         order: { score: 'DESC' },
         relations: { user: true },
         select: {
@@ -69,6 +70,14 @@ export class RankingService {
             profileImagePath: true,
           },
         },
+      });
+
+      const result = ranking.map((item) => {
+        if (item?.user?.profileImagePath !== undefined) {
+          item.user.profileImagePath = readFiles(item.user.profileImagePath);
+        }
+
+        return item;
       });
 
       return { result };
