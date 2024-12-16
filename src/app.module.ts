@@ -41,7 +41,7 @@ import { TrainingReleasesModule } from './training-releases/training-releases.mo
       username: process.env.DB_USERNAME,
       port: parseInt(process.env.DB_PORT),
       entities: [__dirname + '/**/*.entity{.ts,.js}'],
-      synchronize: process.env.NODE_ENV !== 'production',
+      synchronize: process.env.SYNCHRONIZE_DB === 'true' && process.env.NODE_ENV === 'development',
     }),
     ScheduleModule.forRoot(),
     ConfigModule.forRoot({ isGlobal: true, envFilePath: '.env' }),
@@ -53,4 +53,4 @@ import { TrainingReleasesModule } from './training-releases/training-releases.mo
   controllers: [AppController],
   providers: [AppService, { provide: APP_GUARD, useClass: JwtAuthGuard }],
 })
-export class AppModule {}
+export class AppModule { }
