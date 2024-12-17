@@ -25,4 +25,8 @@ export class CreateUserDto {
   @IsOptional()
   @IsNumber({ maxDecimalPlaces: 2 })
   height?: number;
+
+  @IsOptional()
+  @IsNumber({ maxDecimalPlaces: 2 })
+  bmi?: number; // Body Mass Index (Índice de Massa Corporal)
 }

@@ -16,6 +16,7 @@ import { JwtAuthGuard } from './auth/jwt/jwt-auth-guard';
 import { RankingModule } from './ranking/ranking.module';
 import { BetDaysModule } from './bet-days/bet-days.module';
 import { CronJobsModule } from './cron-jobs/cron-jobs.module';
+import { UsersLogsModule } from './users-logs/users-logs.module';
 import { SystemLogsModule } from './system-logs/system-logs.module';
 import { ParticipantsModule } from './participants/participants.module';
 import { TrainingBetsModule } from './training-bets/training-bets.module';
@@ -28,6 +29,7 @@ import { TrainingReleasesModule } from './training-releases/training-releases.mo
     BetDaysModule,
     RankingModule,
     CronJobsModule,
+    UsersLogsModule,
     SystemLogsModule,
     ParticipantsModule,
     TrainingBetsModule,

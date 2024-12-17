@@ -11,6 +11,7 @@ import {
 } from 'typeorm';
 import { Exclude, Transform } from 'class-transformer';
 import { RankingEntity } from '../../ranking/entities/ranking.entity';
+import { UsersLogEntity } from '../../users-logs/entities/users-log.entity';
 import { ParticipantsEntity } from '../../participants/entities/participants.entity';
 
 @Entity('users')
@@ -41,6 +42,10 @@ export class UsersEntity {
   @Column('decimal', { precision: 3, scale: 2, default: 0.0 })
   height: number;
 
+  @Transform(({ value }) => parseFloat(value))
+  @Column('decimal', { precision: 5, scale: 2, default: 0.0 })
+  bmi: number; // Body Mass Index (Índice de Massa Corporal)
+
   @Column({ default: 0 })
   wins: number;
 
@@ -62,6 +67,9 @@ export class UsersEntity {
   @OneToOne(() => RankingEntity, (ranking) => ranking.user, { cascade: true })
   @JoinColumn({ name: 'rankingId' })
   ranking: RankingEntity;
+
+  @OneToMany(() => UsersLogEntity, (userLogs) => userLogs.user)
+  userLogs: UsersLogEntity[];
 
   @CreateDateColumn({ type: 'timestamp' })
   createdAt: Date;

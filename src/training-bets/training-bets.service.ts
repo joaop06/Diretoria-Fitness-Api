@@ -65,7 +65,9 @@ export class TrainingBetsService {
       }
 
       await Promise.all(
-        usersWins.map((user) => this.usersService.update(user.id, user)),
+        usersWins.map((user) =>
+          this.usersService.updateStatistics(user.id, user),
+        ),
       );
     } catch (e) {
       this.logger.error(e);
@@ -110,7 +112,9 @@ export class TrainingBetsService {
       }
 
       await Promise.all(
-        usersLosses.map((user) => this.usersService.update(user.id, user)),
+        usersLosses.map((user) =>
+          this.usersService.updateStatistics(user.id, user),
+        ),
       );
     } catch (e) {
       this.logger.error(e);
@@ -127,7 +131,7 @@ export class TrainingBetsService {
       const totalFaults =
         await this.participantsService.getTotalFaultsFromUser(userId);
 
-      await this.usersService.update(userId, { totalFaults });
+      await this.usersService.updateStatistics(userId, { totalFaults });
     } catch (e) {
       this.logger.error(e);
       await this.systemLogsService.upsert({
@@ -144,7 +148,7 @@ export class TrainingBetsService {
       const allUserParticipations =
         await this.participantsService.findAll(options);
 
-      await this.usersService.update(userId, {
+      await this.usersService.updateStatistics(userId, {
         totalTrainingDays: allUserParticipations.rows.length,
       });
     } catch (e) {

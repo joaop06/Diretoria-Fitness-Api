@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsDecimal } from 'class-validator';
+import { IsString, IsOptional, IsNumber } from 'class-validator';
 
 export class UpdateUserDto {
   @IsString()
@@ -9,11 +9,15 @@ export class UpdateUserDto {
   @IsOptional()
   email?: string;
 
-  @IsDecimal()
   @IsOptional()
+  @IsNumber({ maxDecimalPlaces: 1 })
   weight?: number;
 
-  @IsDecimal()
   @IsOptional()
+  @IsNumber({ maxDecimalPlaces: 2 })
   height?: number;
+
+  @IsOptional()
+  @IsNumber({ maxDecimalPlaces: 2 })
+  bmi?: number; // Body Mass Index (Índice de Massa Corporal)
 }
