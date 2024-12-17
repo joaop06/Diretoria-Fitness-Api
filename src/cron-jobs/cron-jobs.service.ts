@@ -12,7 +12,6 @@ import { ParticipantsService } from '../participants/participants.service';
 import { TrainingBetsService } from '../training-bets/training-bets.service';
 import { LevelEnum as LogLevelEnum } from '../system-logs/enum/log-level.enum';
 import { ParticipantsEntity } from '../participants/entities/participants.entity';
-import { TrainingBetEntity } from '../training-bets/entities/training-bet.entity';
 import { StatusEnum as TrainingBetsStatusEnum } from '../training-bets/enum/status.enum';
 
 @Injectable()
@@ -49,26 +48,31 @@ export class CronJobsService {
        *
        * Se a quantidade de dias concluídos for igual a duração, a aposta está completa
        */
-      const trainingBets: TrainingBetEntity[] = [];
-      if (betId) {
-        const trainingBet = await this.trainingBetsService.findOne(betId);
-        trainingBets.push(trainingBet);
-      } else {
-        const { rows: bets } = await this.trainingBetsService.findAll({
-          where: { status: Not(TrainingBetsStatusEnum.ENCERRADA) },
-          relations: [
-            'betDays',
-            'betDays.trainingReleases',
-            'participants',
-            'participants.user',
-            'participants.trainingReleases',
-            'participants.trainingReleases.betDay',
-          ],
-        });
-        trainingBets.push(...bets);
-      }
+      let where;
+      if (betId) where = { id: betId };
+      else where = { status: Not(TrainingBetsStatusEnum.ENCERRADA) };
 
+      const { rows: trainingBets } = await this.trainingBetsService.findAll({
+        where,
+        relations: [
+          'betDays',
+          'betDays.trainingReleases',
+          'participants',
+          'participants.user',
+          'participants.trainingReleases',
+          'participants.trainingReleases.betDay',
+        ],
+      });
+
+      /**
+       * Adiciona 1 dia apenas quando é passado o ID da aposta,
+       * pois somente nesta situação (lançamento de treino), é preciso considerar o dia atual
+       *
+       * As demais execuções serão sempre as 00:01, ou seja, o dia anterior será considerado
+       */
       const today = moment();
+      if (betId) today.add(1, 'days');
+
       for (const trainingBet of trainingBets) {
         const { faultsAllowed, betDays, participants } = trainingBet;
         const betDaysComplete = betDays.filter(
@@ -85,27 +89,35 @@ export class CronJobsService {
         betDaysComplete.forEach((betDay) => {
           betDaysFaults.push({ id: betDay.id, totalFaults: 0 });
 
-          /** Verifica os participantes que não treinaram */
+          /** Verifica as falhas dos participantes */
           participants.forEach((participant) => {
+            let participantFault = participantsFaults.find(
+              (item) => item.id === participant.id,
+            );
+
+            if (!participantFault) {
+              participantsFaults.push({
+                faults: 0,
+                id: participant.id,
+                user: participant.user,
+              });
+
+              participantFault = participantsFaults.find(
+                (item) => item.id === participant.id,
+              );
+            }
+
             // Busca nos treinos pelo participante e o dia atual
             const participantTraining = participant?.trainingReleases?.find(
               (item) => item.betDay.id === betDay.id,
             );
 
-            /** Se o participante não treinou */
+            /**
+             * Se o participante não treinou
+             * irá contabilizar adiciona uma falha para ele e para o Dia de Treino
+             */
             if (!participantTraining) {
-              // adiciona uma falha para o participante
-              const participantFault = participantsFaults.find(
-                (item) => item.id === participant.id,
-              );
-
-              if (participantFault) participantFault.faults += 1;
-              else
-                participantsFaults.push({
-                  id: participant.id,
-                  faults: 1,
-                  user: participant.user,
-                });
+              participantFault.faults += 1;
 
               // adiciona uma falha ao total do dia
               const betDayFault = betDaysFaults.find(
@@ -194,7 +206,7 @@ export class CronJobsService {
   @Cron('2 * * * *')
   async updateStatisticsRanking(userId?: number) {
     let logLevel = LogLevelEnum.INFO;
-    let logMessage = 'Estatísticas dos Usuários atualizadas';
+    let logMessage = 'Ranking de usuários atualizado';
 
     try {
       const users: UsersEntity[] = [];
@@ -222,8 +234,6 @@ export class CronJobsService {
       scores.map(async (score) => {
         await this.rankingService.update({ user: { id: score.userId } }, score);
       });
-
-      if (userId) logMessage = `Apostas ${userId} foi atualizada`;
     } catch (e) {
       logMessage = e.message;
       logLevel = LogLevelEnum.ERROR;

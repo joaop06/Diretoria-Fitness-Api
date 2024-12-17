@@ -32,7 +32,7 @@ export class ParticipantsEntity {
   declassified: boolean;
 
   @Transform(({ value }) => parseFloat(value))
-  @Column({ type: 'decimal', default: 0.0 })
+  @Column('decimal', { precision: 5, scale: 2, default: 0.0 })
   utilization: number;
 
   @ManyToOne(() => UsersEntity, (user) => user.participants, {

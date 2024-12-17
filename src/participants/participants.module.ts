@@ -4,6 +4,7 @@ import { UsersEntity } from '../users/entities/users.entity';
 import { ParticipantsService } from './participants.service';
 import { ParticipantsController } from './participants.controller';
 import { ParticipantsEntity } from './entities/participants.entity';
+import { SystemLogsModule } from '../system-logs/system-logs.module';
 import { TrainingBetEntity } from '../training-bets/entities/training-bet.entity';
 
 @Module({
@@ -16,6 +17,7 @@ import { TrainingBetEntity } from '../training-bets/entities/training-bet.entity
       UsersEntity,
       TrainingBetEntity,
     ]),
+    SystemLogsModule,
   ],
 })
 export class ParticipantsModule {}

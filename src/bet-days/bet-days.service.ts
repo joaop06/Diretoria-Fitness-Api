@@ -1,15 +1,23 @@
 import { Repository } from 'typeorm';
-import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { Injectable, Logger } from '@nestjs/common';
 import { BetDaysEntity } from './entities/bet-days.entity';
 import { CreateBetDayDto } from './dto/create-bet-day.dto';
+import { LevelEnum } from '../system-logs/enum/log-level.enum';
+import { SystemLogsService } from '../system-logs/system-logs.service';
 
 @Injectable()
 export class BetDaysService {
+  private logger: Logger;
+
   constructor(
     @InjectRepository(BetDaysEntity)
     private betDaysRepository: Repository<BetDaysEntity>,
-  ) {}
+
+    private systemLogsService: SystemLogsService,
+  ) {
+    this.logger = new Logger();
+  }
 
   async bulkCreate(allBetDays: CreateBetDayDto[]) {
     try {
@@ -73,6 +81,44 @@ export class BetDaysService {
       });
     } catch (e) {
       throw e;
+    }
+  }
+
+  async updateUtilization(betDayId: number) {
+    try {
+      const betDay = await this.betDaysRepository.findOne({
+        where: { id: betDayId },
+        relations: [
+          'trainingBet',
+          'trainingReleases',
+          'trainingBet.participants',
+        ],
+      });
+
+      const {
+        trainingReleases,
+        trainingBet: { participants },
+      } = betDay;
+
+      const quantityParticipants = participants.length;
+      const quantityTraining = trainingReleases.length;
+      const totalFaults = quantityParticipants - quantityTraining;
+
+      // Cálculo do aproveitamento em percentual
+      const utilization = parseFloat(
+        (100 - (totalFaults / participants.length) * 100).toFixed(2),
+      );
+
+      // Atualiza o registro do dia
+      await this.update(betDay.id, {
+        utilization: isNaN(utilization) ? 0 : utilization,
+      });
+    } catch (e) {
+      this.logger.error(e);
+      await this.systemLogsService.upsert({
+        level: LevelEnum.ERROR,
+        message: `Falha ao atualizar aproveitamento do dia de treino ${betDayId}`,
+      });
     }
   }
 }

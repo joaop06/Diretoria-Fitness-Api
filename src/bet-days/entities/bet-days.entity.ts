@@ -28,7 +28,7 @@ export class BetDaysEntity {
   totalFaults: number;
 
   @Transform(({ value }) => parseFloat(value))
-  @Column({ type: 'decimal', default: 0.0 })
+  @Column('decimal', { precision: 5, scale: 2, default: 0.0 })
   utilization: number;
 
   @ManyToOne(() => TrainingBetEntity, (trainingBet) => trainingBet.betDays, {

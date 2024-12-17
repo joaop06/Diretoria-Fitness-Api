@@ -65,6 +65,10 @@ export class TrainingReleasesService {
       } = participant;
       this.cronJobsService.updateStatisticsRanking(userId);
 
+      // Atualiza o aproveitamento do Participante e do Dia de Treino
+      this.betDaysService.updateUtilization(object.betDayId);
+      this.participantsService.updateUtilization(object.participantId);
+
       return result;
     } catch (e) {
       throw e;
