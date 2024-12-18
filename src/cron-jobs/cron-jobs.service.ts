@@ -4,7 +4,6 @@ import { Cron } from '@nestjs/schedule';
 import { Injectable, Logger } from '@nestjs/common';
 import { UsersService } from '../users/users.service';
 import { RankingService } from '../ranking/ranking.service';
-import { UsersEntity } from '../users/entities/users.entity';
 import { BetDaysService } from '../bet-days/bet-days.service';
 import { BetDaysEntity } from '../bet-days/entities/bet-days.entity';
 import { SystemLogsService } from '../system-logs/system-logs.service';
@@ -209,14 +208,9 @@ export class CronJobsService {
     let logMessage = 'Ranking de usuários atualizado';
 
     try {
-      const users: UsersEntity[] = [];
-      if (userId) {
-        const user = await this.usersService.findOne(userId);
-        users.push(user);
-      } else {
-        const { rows } = await this.usersService.findAll();
-        users.push(...rows);
-      }
+      let where;
+      if (userId) where = { id: userId };
+      const { rows: users } = await this.usersService.findAll({ where });
 
       /**
        * Calcula as pontuações de todos os usuários

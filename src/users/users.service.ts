@@ -1,18 +1,20 @@
 import * as fs from 'fs';
 import * as bcrypt from 'bcryptjs';
-import { Repository } from 'typeorm';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { FindManyOptions, Repository } from 'typeorm';
 import { UsersEntity } from './entities/users.entity';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { FindReturnModelDto } from 'public/dto/find.dto';
+import { ReturnedUserDto } from './dto/returned-user.dto';
 import { RankingService } from '../ranking/ranking.service';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { UsersLogsService } from '../users-logs/users-logs.service';
 import { Exception } from '../../public/interceptors/exception.filter';
 import { UploadProfileImageDto } from './dto/upload-profile-image.dto';
 import { UpdateStatisticsUserDto } from './dto/update-statistics-user.dto';
+import { FindOptionsDto, FindReturnModelDto } from '../../public/dto/find.dto';
+import { ParticipantsEntity } from '../participants/entities/participants.entity';
 
 @Injectable()
 export class UsersService {
@@ -20,19 +22,18 @@ export class UsersService {
     @InjectRepository(UsersEntity)
     private usersRepository: Repository<UsersEntity>,
 
+    @InjectRepository(ParticipantsEntity)
+    private participantsRepository: Repository<ParticipantsEntity>,
+
     private rankingService: RankingService,
 
     private usersLogsService: UsersLogsService,
-  ) { }
+  ) {}
 
   async create(object: CreateUserDto): Promise<UsersEntity> {
     try {
-      /**
-       * Validação dos dados que serão alterados
-       */
-      const { bmi } = await this.validateUserChangeLogs(object);
-      object.bmi = bmi;
-
+      // Irá calcular o IMC e atribuir ao objeto do novo usuário
+      await this.validateUserChangeLogs(object);
 
       const password = await bcrypt.hash(object.password, 10);
 
@@ -43,7 +44,6 @@ export class UsersService {
       await this.rankingService.create(result.id);
 
       return result;
-
     } catch (e) {
       if (e.message.includes('Duplicate entry')) {
         new Exception({
@@ -61,8 +61,10 @@ export class UsersService {
       /**
        * Validação dos dados que serão alterados
        */
-      const { bmi, userLogsPromises } = await this.validateUserChangeLogs(object, id);
-      object.bmi = bmi;
+      const { userLogsPromises } = await this.validateUserChangeLogs(
+        object,
+        id,
+      );
 
       /** Usuário atualizado */
       const result = await this.usersRepository.update(id, object);
@@ -78,14 +80,10 @@ export class UsersService {
 
   async validateUserChangeLogs(object: UpdateUserDto, userId?: number) {
     try {
-      let bmi: number;
       let userLogsPromises = [];
       if (object.weight || object.height) {
-
         // Calcula o IMC com 2 casas decimais
-        bmi = parseFloat(
-          (object.weight / (object.height * object.height)).toFixed(2),
-        );
+        object.bmi = this.calculateBMI(object.weight, object.height);
 
         // Somente insere logs na atualização do usuário
         if (userId) {
@@ -94,6 +92,16 @@ export class UsersService {
             where: { id: userId },
           });
 
+          /**
+           * Calcula novamente o IMC
+           * caso tenha atualizado apenas um dos parêmetros
+           */
+          if (!object.bmi) {
+            object.weight = object.weight ?? +oldDataUser.weight;
+            object.height = object.height ?? +oldDataUser.height;
+            object.bmi = this.calculateBMI(object.weight, object.height);
+          }
+
           const keys = Object.keys(object);
           userLogsPromises = keys.map((fieldName) => {
             if (
@@ -101,21 +109,22 @@ export class UsersService {
               parseFloat(oldDataUser[fieldName]) !== object[fieldName]
             ) {
               const value = `${object[fieldName]}`;
-              return this.usersLogsService.create({
-                value,
-                userId,
-                fieldName,
-              });
+              return this.usersLogsService.create({ value, userId, fieldName });
             }
           });
         }
       }
 
-      return { bmi, userLogsPromises };
-
+      return { userLogsPromises };
     } catch (e) {
       throw e;
     }
+  }
+
+  private calculateBMI(weight: number, height: number): number {
+    const bmi = parseFloat((weight / (height * height)).toFixed(2));
+
+    return isNaN(bmi) ? 0 : bmi;
   }
 
   async updateStatistics(id: number, object: UpdateStatisticsUserDto) {
@@ -126,25 +135,44 @@ export class UsersService {
     }
   }
 
-  async findOne(id: number): Promise<UsersEntity> {
+  async findOne(id: number): Promise<ReturnedUserDto> {
     try {
-      return await this.usersRepository.findOne({
+      const user = await this.usersRepository.findOne({
         where: { id },
-        select: {
-          userLogs: {
-            value: true,
-            fieldName: true,
-            createdAt: true,
-          },
-        },
+        relations: ['userLogs'],
       });
+
+      const bmiLogs = user.userLogs.filter((log) => log.fieldName === 'bmi');
+      const heightLogs = user.userLogs.filter(
+        (log) => log.fieldName === 'height',
+      );
+      const weightLogs = user.userLogs.filter(
+        (log) => log.fieldName === 'weight',
+      );
+
+      // Total de apostas participadas
+      const betsParticipated = await this.participantsRepository.count({
+        where: { user: { id } },
+      });
+
+      return {
+        ...user,
+        betsParticipated,
+        userLogs: {
+          bmiLogs,
+          heightLogs,
+          weightLogs,
+        },
+      };
     } catch (e) {
       throw e;
     }
   }
 
-  async findAll(): Promise<FindReturnModelDto<UsersEntity>> {
-    const [rows, count] = await this.usersRepository.findAndCount();
+  async findAll(
+    options: FindOptionsDto<UsersEntity> | FindManyOptions<UsersEntity>,
+  ): Promise<FindReturnModelDto<UsersEntity>> {
+    const [rows, count] = await this.usersRepository.findAndCount(options);
     return { rows, count };
   }
 
@@ -176,7 +204,7 @@ export class UsersService {
 
       return await this.usersRepository.update(id, { profileImagePath });
     } catch (e) {
-      fs.unlink(object.profileImagePath, () => { });
+      fs.unlink(object.profileImagePath, () => {});
       throw e;
     }
   }

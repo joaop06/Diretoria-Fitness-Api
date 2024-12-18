@@ -16,6 +16,9 @@ export class UsersLogEntity {
   id: number;
 
   @Column()
+  userId: number;
+
+  @Column()
   fieldName: string;
 
   @Column()

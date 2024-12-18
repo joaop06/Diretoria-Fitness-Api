@@ -7,6 +7,7 @@ import { FileDto } from '../../public/dto/file.dto';
 import { UsersEntity } from './entities/users.entity';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { ReturnedUserDto } from './dto/returned-user.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { Public } from '../../public/decorators/public.decorator';
@@ -92,14 +93,14 @@ export class UsersController {
   }
 
   @Get(':id')
-  async findOne(@Req() req, @Param('id') id: string): Promise<UsersEntity> {
+  async findOne(@Req() req, @Param('id') id: string): Promise<ReturnedUserDto> {
     try {
       if (req.user.id !== +id)
         throw new Error('Não é possível buscar dados de outro usuário');
 
       const user = await this.usersService.findOne(+id);
 
-      return plainToClass(UsersEntity, user);
+      return plainToClass(ReturnedUserDto, user);
     } catch (e) {
       new Exception(e);
     }
