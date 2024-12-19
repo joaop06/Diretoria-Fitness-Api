@@ -2,6 +2,7 @@ import * as fs from 'fs';
 import * as bcrypt from 'bcryptjs';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { readFiles } from '../../helper/read.files';
 import { FindManyOptions, Repository } from 'typeorm';
 import { UsersEntity } from './entities/users.entity';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -28,7 +29,7 @@ export class UsersService {
     private rankingService: RankingService,
 
     private usersLogsService: UsersLogsService,
-  ) {}
+  ) { }
 
   async create(object: CreateUserDto): Promise<UsersEntity> {
     try {
@@ -155,6 +156,9 @@ export class UsersService {
         where: { user: { id } },
       });
 
+      // Leitura da Foto de Perfil
+      user.profileImagePath = readFiles(user.profileImagePath);
+
       return {
         ...user,
         betsParticipated,
@@ -204,7 +208,7 @@ export class UsersService {
 
       return await this.usersRepository.update(id, { profileImagePath });
     } catch (e) {
-      fs.unlink(object.profileImagePath, () => {});
+      fs.unlink(object.profileImagePath, () => { });
       throw e;
     }
   }
