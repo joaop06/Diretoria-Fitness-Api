@@ -63,14 +63,8 @@ export class CronJobsService {
         ],
       });
 
-      /**
-       * Adiciona 1 dia apenas quando é passado o ID da aposta,
-       * pois somente nesta situação (lançamento de treino), é preciso considerar o dia atual
-       *
-       * As demais execuções serão sempre as 00:01, ou seja, o dia anterior será considerado
-       */
+
       const today = moment();
-      if (betId) today.add(1, 'days');
 
       for (const trainingBet of trainingBets) {
         const { faultsAllowed, betDays, participants } = trainingBet;
