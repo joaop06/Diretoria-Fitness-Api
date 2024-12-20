@@ -9,6 +9,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
 import { ScheduleModule } from '@nestjs/schedule';
 import { ServeStaticModule } from '@nestjs/serve-static';
+import { dataSourceOptions } from '../config/data-source';
 
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
@@ -34,20 +35,8 @@ import { TrainingReleasesModule } from './training-releases/training-releases.mo
     ParticipantsModule,
     TrainingBetsModule,
     TrainingReleasesModule,
-    TypeOrmModule.forRoot({
-      cache: false,
-      type: 'mysql',
-      host: process.env.DB_HOST,
-      database: process.env.DB_NAME,
-      password: process.env.DB_PASSWORD,
-      username: process.env.DB_USERNAME,
-      port: parseInt(process.env.DB_PORT),
-      entities: [__dirname + '/**/*.entity{.ts,.js}'],
-      synchronize:
-        process.env.SYNCHRONIZE_DB === 'true' &&
-        process.env.NODE_ENV === 'development',
-    }),
     ScheduleModule.forRoot(),
+    TypeOrmModule.forRoot(dataSourceOptions),
     ConfigModule.forRoot({ isGlobal: true, envFilePath: '.env' }),
     ServeStaticModule.forRoot({
       serveRoot: '/uploads', // Prefixo da URL
@@ -57,4 +46,4 @@ import { TrainingReleasesModule } from './training-releases/training-releases.mo
   controllers: [AppController],
   providers: [AppService, { provide: APP_GUARD, useClass: JwtAuthGuard }],
 })
-export class AppModule {}
+export class AppModule { }
