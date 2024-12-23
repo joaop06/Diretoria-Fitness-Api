@@ -1,8 +1,10 @@
 import * as fs from 'fs';
+import * as moment from 'moment';
 import * as bcrypt from 'bcryptjs';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { readFiles } from '../../helper/read.files';
+import { EmailService } from '../email/email.service';
 import { FindManyOptions, Repository } from 'typeorm';
 import { UsersEntity } from './entities/users.entity';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -29,6 +31,8 @@ export class UsersService {
     private rankingService: RankingService,
 
     private usersLogsService: UsersLogsService,
+
+    private readonly emailService: EmailService,
   ) { }
 
   async create(object: CreateUserDto): Promise<UsersEntity> {
@@ -41,10 +45,15 @@ export class UsersService {
       const newUser = this.usersRepository.create({ ...object, password });
       const result = await this.usersRepository.save(newUser);
 
+
       // Insere registro do usuário para classificação
       await this.rankingService.create(result.id);
 
+      // Salvar e Enviar o código de verificação
+      await this.saveAndSendVerificationCode(result.id, object.email);
+
       return result;
+
     } catch (e) {
       if (e.message.includes('Duplicate entry')) {
         new Exception({
@@ -55,6 +64,16 @@ export class UsersService {
         throw e;
       }
     }
+  }
+
+  async saveAndSendVerificationCode(userId: number, email: string): Promise<void> {
+    const verificationCode = Math.floor(Math.random() * 1000000);
+
+    // Atualize o usuário com o código de verificação
+    await this.usersRepository.update(userId, { verificationCode });
+
+    // Enviar e-mail de verificação
+    await this.emailService.sendVerificationCode(email, verificationCode);
   }
 
   async update(id: number, object: UpdateUserDto) {

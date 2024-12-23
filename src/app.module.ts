@@ -12,7 +12,9 @@ import { ServeStaticModule } from '@nestjs/serve-static';
 import { dataSourceOptions } from '../config/data-source';
 
 import { AuthModule } from './auth/auth.module';
+import { EmailModule } from './email/email.module';
 import { UsersModule } from './users/users.module';
+import { EmailService } from './email/email.service';
 import { JwtAuthGuard } from './auth/jwt/jwt-auth-guard';
 import { RankingModule } from './ranking/ranking.module';
 import { BetDaysModule } from './bet-days/bet-days.module';
@@ -26,6 +28,7 @@ import { TrainingReleasesModule } from './training-releases/training-releases.mo
 @Module({
   imports: [
     AuthModule,
+    EmailModule,
     UsersModule,
     BetDaysModule,
     RankingModule,
@@ -44,6 +47,6 @@ import { TrainingReleasesModule } from './training-releases/training-releases.mo
     }),
   ],
   controllers: [AppController],
-  providers: [AppService, { provide: APP_GUARD, useClass: JwtAuthGuard }],
+  providers: [AppService, { provide: APP_GUARD, useClass: JwtAuthGuard }, EmailService],
 })
 export class AppModule { }

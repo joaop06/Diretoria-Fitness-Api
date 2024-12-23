@@ -1,11 +1,13 @@
 import { Exclude, Transform } from 'class-transformer';
 import { UsersLogEntity } from '../../users-logs/entities/users-log.entity';
 import {
+  IsDate,
+  IsObject,
   IsNumber,
   IsString,
-  IsDateString,
+  IsBoolean,
   IsDecimal,
-  IsObject,
+  IsDateString,
 } from 'class-validator';
 
 export class ReturnedUserDto {
@@ -20,6 +22,12 @@ export class ReturnedUserDto {
 
   @Exclude()
   password: string;
+
+  @IsBoolean()
+  isVerified: boolean;
+
+  @IsNumber()
+  verificationCode: number; // Código de Verificação
 
   @IsDecimal()
   @Transform(({ value }) => parseFloat(value))

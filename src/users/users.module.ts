@@ -6,6 +6,7 @@ import { UsersEntity } from './entities/users.entity';
 import { RankingModule } from '../ranking/ranking.module';
 import { UsersLogsModule } from '../users-logs/users-logs.module';
 import { ParticipantsEntity } from '../participants/entities/participants.entity';
+import { EmailModule } from '../email/email.module';
 
 @Module({
   exports: [UsersService],
@@ -15,6 +16,7 @@ import { ParticipantsEntity } from '../participants/entities/participants.entity
     TypeOrmModule.forFeature([UsersEntity, ParticipantsEntity]),
     RankingModule,
     UsersLogsModule,
+    EmailModule,
   ],
 })
-export class UsersModule {}
+export class UsersModule { }

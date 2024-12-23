@@ -3,10 +3,11 @@ import { AuthService } from './auth.service';
 import { Controller, Post, Body, HttpCode } from '@nestjs/common';
 import { Public } from '../../public/decorators/public.decorator';
 import { Exception } from '../../public/interceptors/exception.filter';
+import { UserVerificationCodeDto } from './dto/user-verification-code.dto';
 
 @Controller('auth')
 export class AuthController {
-  constructor(private authService: AuthService) {}
+  constructor(private authService: AuthService) { }
 
   @Public()
   @Post('login')
@@ -22,6 +23,16 @@ export class AuthController {
         });
 
       return await this.authService.login(user);
+    } catch (e) {
+      new Exception(e);
+    }
+  }
+
+  @Public()
+  @Post('verification-code')
+  async verifyUserVerificationCode(@Body() object: UserVerificationCodeDto) {
+    try {
+      return await this.authService.verifyUserVerificationCode(object);
     } catch (e) {
       new Exception(e);
     }

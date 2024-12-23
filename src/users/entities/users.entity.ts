@@ -32,6 +32,12 @@ export class UsersEntity {
   @Column({ nullable: false })
   password: string;
 
+  @Column({ default: false })
+  isVerified: boolean;
+
+  @Column({ nullable: true })
+  verificationCode: number; // Código de Verificação
+
   /**
    * Ex: 123.4
    * precision -> Total de Dígitos: 4
