@@ -1,9 +1,9 @@
-import { IsNumber } from "class-validator";
+import { IsNumber } from 'class-validator';
 
 export class UserVerificationCodeDto {
-    @IsNumber()
-    userId: number;
+  @IsNumber()
+  userId: number;
 
-    @IsNumber()
-    code: number;
+  @IsNumber()
+  code: number;
 }

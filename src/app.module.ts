@@ -14,15 +14,15 @@ import { dataSourceOptions } from '../config/data-source';
 import { AuthModule } from './auth/auth.module';
 import { EmailModule } from './email/email.module';
 import { UsersModule } from './users/users.module';
-import { EmailService } from './email/email.service';
-import { JwtAuthGuard } from './auth/jwt/jwt-auth-guard';
 import { RankingModule } from './ranking/ranking.module';
 import { BetDaysModule } from './bet-days/bet-days.module';
 import { CronJobsModule } from './cron-jobs/cron-jobs.module';
 import { UsersLogsModule } from './users-logs/users-logs.module';
+import { JwtAuthGuard } from '../public/guards/jwt/jwt-auth.guard';
 import { SystemLogsModule } from './system-logs/system-logs.module';
 import { ParticipantsModule } from './participants/participants.module';
 import { TrainingBetsModule } from './training-bets/training-bets.module';
+import { OnlyHomologGuard } from '../public/guards/homolog/only-homologation.guard';
 import { TrainingReleasesModule } from './training-releases/training-releases.module';
 
 @Module({
@@ -47,6 +47,10 @@ import { TrainingReleasesModule } from './training-releases/training-releases.mo
     }),
   ],
   controllers: [AppController],
-  providers: [AppService, { provide: APP_GUARD, useClass: JwtAuthGuard }, EmailService],
+  providers: [
+    AppService,
+    { provide: APP_GUARD, useClass: JwtAuthGuard },
+    { provide: APP_GUARD, useClass: OnlyHomologGuard },
+  ],
 })
-export class AppModule { }
+export class AppModule {}

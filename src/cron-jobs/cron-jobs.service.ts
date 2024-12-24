@@ -63,7 +63,6 @@ export class CronJobsService {
         ],
       });
 
-
       const today = moment();
 
       for (const trainingBet of trainingBets) {

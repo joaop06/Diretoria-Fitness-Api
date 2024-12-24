@@ -1,4 +1,3 @@
-import * as moment from 'moment';
 import * as bcrypt from 'bcryptjs';
 import { JwtService } from '@nestjs/jwt';
 import { LoginDto } from './dto/login.dto';
@@ -14,7 +13,7 @@ export class AuthService {
   constructor(
     private jwtService: JwtService,
     private usersService: UsersService,
-  ) { }
+  ) {}
 
   async validateUser(object: LoginDto) {
     const { email, password } = object;
@@ -52,8 +51,8 @@ export class AuthService {
     // Verifica se o código é válido e não expirou
     const isCodeValid = user.verificationCode === object.code;
 
-
-    if (!isCodeValid) throw new Error('Código de Verificação inválido ou expirado')
+    if (!isCodeValid)
+      throw new Error('Código de Verificação inválido ou expirado');
 
     user.isVerified = true; // Marca o usuário como verificado
     user.verificationCode = null; // Limpa o código

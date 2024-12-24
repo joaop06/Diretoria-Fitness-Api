@@ -1,5 +1,4 @@
 import * as fs from 'fs';
-import * as moment from 'moment';
 import * as bcrypt from 'bcryptjs';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -33,7 +32,7 @@ export class UsersService {
     private usersLogsService: UsersLogsService,
 
     private readonly emailService: EmailService,
-  ) { }
+  ) {}
 
   async create(object: CreateUserDto): Promise<UsersEntity> {
     try {
@@ -45,7 +44,6 @@ export class UsersService {
       const newUser = this.usersRepository.create({ ...object, password });
       const result = await this.usersRepository.save(newUser);
 
-
       // Insere registro do usuário para classificação
       await this.rankingService.create(result.id);
 
@@ -53,7 +51,6 @@ export class UsersService {
       await this.saveAndSendVerificationCode(result.id, object.email);
 
       return result;
-
     } catch (e) {
       if (e.message.includes('Duplicate entry')) {
         new Exception({
@@ -66,7 +63,10 @@ export class UsersService {
     }
   }
 
-  async saveAndSendVerificationCode(userId: number, email: string): Promise<void> {
+  async saveAndSendVerificationCode(
+    userId: number,
+    email: string,
+  ): Promise<void> {
     const verificationCode = Math.floor(Math.random() * 1000000);
 
     // Atualize o usuário com o código de verificação
@@ -227,7 +227,7 @@ export class UsersService {
 
       return await this.usersRepository.update(id, { profileImagePath });
     } catch (e) {
-      fs.unlink(object.profileImagePath, () => { });
+      fs.unlink(object.profileImagePath, () => {});
       throw e;
     }
   }

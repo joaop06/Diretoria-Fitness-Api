@@ -1,7 +1,6 @@
 import { Exclude, Transform } from 'class-transformer';
 import { UsersLogEntity } from '../../users-logs/entities/users-log.entity';
 import {
-  IsDate,
   IsObject,
   IsNumber,
   IsString,
