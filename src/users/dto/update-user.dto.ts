@@ -20,4 +20,12 @@ export class UpdateUserDto {
   @IsOptional()
   @IsNumber({ maxDecimalPlaces: 2 })
   bmi?: number; // Body Mass Index (Índice de Massa Corporal)
+
+  @IsNumber()
+  @IsOptional()
+  isVerified?: boolean;
+
+  @IsNumber()
+  @IsOptional()
+  verificationCode?: number; // Código de Verificação
 }

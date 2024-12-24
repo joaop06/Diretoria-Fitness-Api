@@ -37,10 +37,12 @@ export class UsersController {
 
   @Post()
   @Public()
-  async create(@Body() object: CreateUserDto): Promise<UsersEntity> {
+  async create(
+    @Body() object: CreateUserDto,
+  ): Promise<{ message: string; user: UsersEntity }> {
     try {
-      const user = await this.usersService.create(object);
-      return plainToClass(UsersEntity, user);
+      const { message, user } = await this.usersService.create(object);
+      return { message, user: plainToClass(UsersEntity, user) };
     } catch (e) {
       new Exception(e);
     }

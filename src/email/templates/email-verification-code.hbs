@@ -1,2 +1,89 @@
-<h1>Confirmação de Cadastro</h1>
-<p>Seu código de confirmação é: <b>{{code}}</b></p>
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Código de Verificação</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            color: #fff;
+            height: 100vh;
+            display: flex;
+            overflow: hidden;
+            justify-content: center;
+            background-color: #00000000;
+            font-family: Arial, sans-serif;
+            /* Adicionado para evitar barras de rolagem indesejadas */
+        }
+
+        .email-container {
+            width: 100%;
+            max-width: 400px;
+            border-radius: 10px;
+            background-color: #1e1e1e;
+            border: 2px solid #d4af37;
+            /* Garante que respeita o tamanho do dispositivo */
+            padding: 20px;
+            text-align: center;
+            margin: 0 auto 0 auto;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+            /* Centraliza no eixo horizontal se necessário */
+        }
+
+        .email-logo {
+            width: 150px;
+            height: auto;
+            margin-bottom: 20px;
+        }
+
+        .email-title {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #d4af37;
+        }
+
+        .email-message {
+            font-size: 16px;
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+
+        .verification-code {
+            display: inline-block;
+            font-size: 32px;
+            font-weight: bold;
+            color: #d4af37;
+            border: 2px solid #d4af37;
+            border-radius: 5px;
+            padding: 10px 20px;
+            background-color: #1e1e1e;
+        }
+
+        .footer {
+            margin-top: 20px;
+            font-size: 12px;
+            color: #888;
+        }
+    </style>
+
+</head>
+
+<body>
+    <div class="email-container">
+        <img src="cid:logoDiretoriaFitness" alt="Logo Diretoria Fitness" class="email-logo">
+
+        <p class="email-title">Seu Código de Verificação</p>
+        <p class="email-message">
+            Olá <strong>{{name}}</strong>, para validarmos o seu e-mail,
+            <strong>use o código abaixo:</strong>
+        </p>
+        <p class="verification-code">{{code}}</p>
+        <p class="footer">Se você não solicitou este código, ignore esta mensagem.</p>
+    </div>
+</body>
+
+</html>

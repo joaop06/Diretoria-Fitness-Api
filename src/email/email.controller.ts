@@ -14,10 +14,13 @@ export class EmailController {
   @Post('verification-code')
   async sendVerificationCode(
     @Body() object: SendVerificationCodeDto,
-  ): Promise<any> {
-    return await this.emailService.sendVerificationCode(
+  ): Promise<string> {
+    this.emailService.sendVerificationCode(
+      object.name,
       object.email,
       object.code,
     );
+
+    return 'E-mail enviado com sucesso!';
   }
 }

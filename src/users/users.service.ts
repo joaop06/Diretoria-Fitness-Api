@@ -34,7 +34,9 @@ export class UsersService {
     private readonly emailService: EmailService,
   ) {}
 
-  async create(object: CreateUserDto): Promise<UsersEntity> {
+  async create(
+    object: CreateUserDto,
+  ): Promise<{ message: string; user: UsersEntity }> {
     try {
       // Irá calcular o IMC e atribuir ao objeto do novo usuário
       await this.validateUserChangeLogs(object);
@@ -42,15 +44,19 @@ export class UsersService {
       const password = await bcrypt.hash(object.password, 10);
 
       const newUser = this.usersRepository.create({ ...object, password });
-      const result = await this.usersRepository.save(newUser);
+      const user = await this.usersRepository.save(newUser);
 
       // Insere registro do usuário para classificação
-      await this.rankingService.create(result.id);
+      await this.rankingService.create(user.id);
 
       // Salvar e Enviar o código de verificação
-      await this.saveAndSendVerificationCode(result.id, object.email);
+      await this.saveAndSendVerificationCode(user.id, user.name, object.email);
 
-      return result;
+      return {
+        user,
+        message:
+          'Usuário cadastrado com sucesso! Código de verificação enviado no e-mail',
+      };
     } catch (e) {
       if (e.message.includes('Duplicate entry')) {
         new Exception({
@@ -65,6 +71,7 @@ export class UsersService {
 
   async saveAndSendVerificationCode(
     userId: number,
+    name: string,
     email: string,
   ): Promise<void> {
     const verificationCode = Math.floor(Math.random() * 1000000);
@@ -73,7 +80,7 @@ export class UsersService {
     await this.usersRepository.update(userId, { verificationCode });
 
     // Enviar e-mail de verificação
-    await this.emailService.sendVerificationCode(email, verificationCode);
+    this.emailService.sendVerificationCode(name, email, verificationCode);
   }
 
   async update(id: number, object: UpdateUserDto) {

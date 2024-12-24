@@ -41,12 +41,16 @@ export class AuthService {
     };
   }
 
-  async verifyUserVerificationCode(object: UserVerificationCodeDto) {
+  async verifyUserVerificationCode(
+    object: UserVerificationCodeDto,
+  ): Promise<string> {
     const user = await this.usersService.findOne(object.userId);
 
     if (!user) {
       throw new Error('Usuário não encontrado');
     }
+
+    if (user.isVerified) throw new Error();
 
     // Verifica se o código é válido e não expirou
     const isCodeValid = user.verificationCode === object.code;
@@ -54,9 +58,10 @@ export class AuthService {
     if (!isCodeValid)
       throw new Error('Código de Verificação inválido ou expirado');
 
-    user.isVerified = true; // Marca o usuário como verificado
-    user.verificationCode = null; // Limpa o código
-
-    return await this.usersService.update(user.id, user);
+    await this.usersService.update(user.id, {
+      isVerified: true,
+      verificationCode: null,
+    });
+    return 'E-mail verificado com sucesso!';
   }
 }
