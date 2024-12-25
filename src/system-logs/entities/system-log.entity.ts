@@ -14,6 +14,9 @@ export class SystemLogEntity {
   id: number;
 
   @Column()
+  env: string;
+
+  @Column()
   message: string;
 
   @Column({

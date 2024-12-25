@@ -3,18 +3,20 @@ import { Module } from '@nestjs/common';
 import { EmailService } from './email.service';
 import { EmailController } from './email.controller';
 import { MailerModule } from '@nestjs-modules/mailer';
+import { SystemLogsModule } from '../system-logs/system-logs.module';
 import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handlebars.adapter';
 
 @Module({
   imports: [
+    SystemLogsModule,
     MailerModule.forRoot({
       transport: {
-        host: 'smtp.gmail.com',
         port: 587,
         secure: false,
+        host: 'smtp.gmail.com',
         auth: {
-          user: 'diretoria.fitness2020@gmail.com',
           pass: 'bgtz llkk kwzt vukh',
+          user: 'diretoria.fitness2020@gmail.com',
         },
       },
       defaults: {

@@ -1,7 +1,7 @@
 import { LevelEnum } from '../enum/log-level.enum';
-import { IsString, IsOptional } from 'class-validator';
+import { IsOptional, IsString } from 'class-validator';
 
-export class CreateSystemLogDto {
+export class UpsertSystemLog {
   @IsString()
   message: string;
 
@@ -10,5 +10,5 @@ export class CreateSystemLogDto {
   level?: LevelEnum = LevelEnum.INFO;
 
   @IsString()
-  source: string;
+  source?: string;
 }
