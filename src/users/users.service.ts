@@ -215,11 +215,14 @@ export class UsersService {
     const user = await this.usersRepository.findOneBy({ id: userId });
     if (!user) throw new Error('Usuário não encontrado');
 
-    const passwordMatch = object.oldPassword === user.password;
+    const passwordMatch = await bcrypt.compare(
+      object.oldPassword,
+      user.password,
+    );
     if (!passwordMatch) throw new Error('Senha antiga inválida');
 
     return await this.usersRepository.update(userId, {
-      password: object.newPassword,
+      password: await bcrypt.hash(object.newPassword, 10),
     });
   }
 
