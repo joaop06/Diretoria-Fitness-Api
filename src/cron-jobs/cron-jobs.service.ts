@@ -23,7 +23,7 @@ export class CronJobsService {
     private systemLogsService: SystemLogsService,
     private participantsService: ParticipantsService,
     private trainingBetsService: TrainingBetsService,
-  ) { }
+  ) {}
 
   private percentageUtilization(dividend: number, divider: number) {
     return parseFloat((100 - (dividend / divider) * 100).toFixed(2));
@@ -53,8 +53,8 @@ export class CronJobsService {
         where: betId
           ? { id: betId }
           : {
-            status: Not(TrainingBetsStatusEnum.AGENDADA),
-          },
+              status: Not(TrainingBetsStatusEnum.AGENDADA),
+            },
       });
 
       const today = moment();
@@ -124,7 +124,9 @@ export class CronJobsService {
           await this.participantsService.update(participant.id, {
             faults,
             declassified,
-            utilization: isNaN(participant.utilization) ? 0 : participant.utilization,
+            utilization: isNaN(participant.utilization)
+              ? 0
+              : participant.utilization,
           });
         });
 
