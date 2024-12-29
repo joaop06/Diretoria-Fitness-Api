@@ -1,3 +1,4 @@
+import { Not } from 'typeorm';
 import * as moment from 'moment';
 import { Cron, Timeout } from '@nestjs/schedule';
 import { Injectable, Logger } from '@nestjs/common';
@@ -10,7 +11,6 @@ import { ParticipantsService } from '../participants/participants.service';
 import { TrainingBetsStatusEnum } from '../training-bets/enum/status.enum';
 import { TrainingBetsService } from '../training-bets/training-bets.service';
 import { LevelEnum as LogLevelEnum } from '../system-logs/enum/log-level.enum';
-import { Not } from 'typeorm';
 
 @Injectable()
 export class CronJobsService {
@@ -23,14 +23,20 @@ export class CronJobsService {
     private systemLogsService: SystemLogsService,
     private participantsService: ParticipantsService,
     private trainingBetsService: TrainingBetsService,
-  ) {}
+  ) { }
 
   private percentageUtilization(dividend: number, divider: number) {
     return parseFloat((100 - (dividend / divider) * 100).toFixed(2));
   }
+  @Cron('0 0 * * *') // Executa todo dia à meia-noite
+  async updateStatisticsBetsDaily() {
+    await this.updateStatisticsBets();
+  }
+  @Timeout(500) // Executa após 500ms (apenas um exemplo)
+  async updateStatisticsBetsTimeout() {
+    await this.updateStatisticsBets();
+  }
 
-  @Timeout(500) // homolog
-  // @Cron('0 0 * * *') // Executa todo dia às 00:00
   async updateStatisticsBets(betId?: number) {
     let logLevel = LogLevelEnum.INFO;
     let logMessage = 'Estatísticas das Apostas atualizadas';
@@ -47,8 +53,8 @@ export class CronJobsService {
         where: betId
           ? { id: betId }
           : {
-              status: Not(TrainingBetsStatusEnum.AGENDADA),
-            },
+            status: Not(TrainingBetsStatusEnum.AGENDADA),
+          },
       });
 
       const today = moment();
@@ -118,7 +124,7 @@ export class CronJobsService {
           await this.participantsService.update(participant.id, {
             faults,
             declassified,
-            utilization: participant.utilization,
+            utilization: isNaN(participant.utilization) ? 0 : participant.utilization,
           });
         });
 

@@ -1,5 +1,5 @@
-import * as dotenv from 'dotenv';
-dotenv.config();
+import { config } from 'dotenv';
+config();
 
 import { Module } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';

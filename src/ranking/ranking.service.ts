@@ -55,14 +55,17 @@ export class RankingService {
         order: { score: 'DESC' },
         relations: { user: true },
         select: {
-          id: true,
           score: true,
           user: {
             name: true,
+            profileImagePath: true,
+
+            // Estatísticas do Usuário
             wins: true,
             losses: true,
             totalFaults: true,
-            profileImagePath: true,
+            totalTrainingDays: true,
+            totalParticipations: true,
           },
         },
       });

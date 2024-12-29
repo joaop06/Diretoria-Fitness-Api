@@ -1,5 +1,5 @@
-import * as dotenv from 'dotenv';
-dotenv.config();
+import { config } from 'dotenv';
+config();
 
 import * as moment from 'moment';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -11,6 +11,7 @@ import { UsersEntity } from '../users/entities/users.entity';
 import { BetDaysService } from '../bet-days/bet-days.service';
 import { TrainingBetEntity } from './entities/training-bet.entity';
 import { CreateTrainingBetDto } from './dto/create-training-bet.dto';
+import { Exception } from '../../public/interceptors/exception.filter';
 import { isAfter, isBefore, validateDaysComplete } from '../../helper/dates';
 import { FindOptionsDto, FindReturnModelDto } from '../../public/dto/find.dto';
 
@@ -29,7 +30,9 @@ export class TrainingBetsService {
     trainingBetId: number,
     todayDate: moment.Moment,
   ): Promise<TrainingBetsStatusEnum> {
-    const trainingBet = await this.findOne(trainingBetId);
+    const trainingBet = await this.findById(trainingBetId, {
+      relations: ['betDays'],
+    });
     const { status, initialDate, finalDate, betDays } = trainingBet;
 
     const todayFormat = todayDate.format('YYYY-MM-DD');
@@ -156,7 +159,7 @@ export class TrainingBetsService {
     duration: number,
     initialDate: Date | string,
   ) {
-    const trainingBet = await this.findOne(trainingBetId);
+    const trainingBet = await this.findById(trainingBetId);
     const existingBetDays =
       await this.betDaysService.findAllByTrainingBetId(trainingBetId);
 
@@ -252,7 +255,7 @@ export class TrainingBetsService {
           );
       }
 
-      const trainingBet = await this.findOne(id);
+      const trainingBet = await this.findById(id);
       if (!trainingBet) throw new Error('Aposta não encontrada');
 
       let newTrainingBet: Partial<TrainingBetEntity> = {
@@ -303,9 +306,27 @@ export class TrainingBetsService {
     }
   }
 
+  async findById(
+    id: number,
+    options?:
+      | FindOptionsDto<TrainingBetEntity>
+      | FindManyOptions<TrainingBetEntity>,
+  ): Promise<TrainingBetEntity> {
+    try {
+      const trainingBet = await this.trainingBetRepository.findOne({
+        ...options,
+        where: { id },
+      });
+
+      return trainingBet;
+    } catch (e) {
+      throw e;
+    }
+  }
+
   async findOne(id: number): Promise<TrainingBetEntity> {
     try {
-      const result = await this.trainingBetRepository.findOne({
+      const trainingBet = await this.trainingBetRepository.findOne({
         where: { id },
         relations: [
           'participants',
@@ -356,10 +377,13 @@ export class TrainingBetsService {
         },
       });
 
+      if (!trainingBet)
+        new Exception({ status: 404, message: 'Aposta não encontrada' });
+
       /**
        * Faz a Leitura das imagens dos usuários participantes
        */
-      result.participants = result.participants.map((participant) => {
+      trainingBet.participants = trainingBet.participants.map((participant) => {
         if (participant?.user?.profileImagePath !== undefined) {
           participant.user.profileImagePath = readFiles(
             participant.user.profileImagePath,
@@ -372,7 +396,7 @@ export class TrainingBetsService {
       /**
        * Faz a Leitura das imagens de treinos e dos usuários
        */
-      result.betDays = result.betDays.map((day) => {
+      trainingBet.betDays = trainingBet.betDays.map((day) => {
         day.trainingReleases = day.trainingReleases.map((training) => {
           training.imagePath = readFiles(training.imagePath);
 
@@ -388,7 +412,7 @@ export class TrainingBetsService {
         return day;
       });
 
-      return result;
+      return trainingBet;
     } catch (e) {
       this.logger.error(e);
       throw e;
