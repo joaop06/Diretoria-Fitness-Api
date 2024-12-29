@@ -2,89 +2,58 @@ import * as dotenv from 'dotenv';
 dotenv.config();
 
 import * as moment from 'moment';
-import { StatusEnum } from './enum/status.enum';
 import { InjectRepository } from '@nestjs/typeorm';
 import { readFiles } from '../../helper/read.files';
 import { Injectable, Logger } from '@nestjs/common';
-import { UsersService } from '../users/users.service';
 import { Repository, FindManyOptions } from 'typeorm';
+import { TrainingBetsStatusEnum } from './enum/status.enum';
+import { UsersEntity } from '../users/entities/users.entity';
 import { BetDaysService } from '../bet-days/bet-days.service';
 import { TrainingBetEntity } from './entities/training-bet.entity';
 import { CreateTrainingBetDto } from './dto/create-training-bet.dto';
-import { SystemLogsService } from '../system-logs/system-logs.service';
-import { ParticipantsService } from '../participants/participants.service';
-import { LevelEnum as LogLevelEnum } from '../system-logs/enum/log-level.enum';
-import {
-  buildOptions,
-  FindOptionsDto,
-  FindReturnModelDto,
-} from '../../public/dto/find.dto';
+import { isAfter, isBefore, validateDaysComplete } from '../../helper/dates';
+import { FindOptionsDto, FindReturnModelDto } from '../../public/dto/find.dto';
 
 @Injectable()
 export class TrainingBetsService {
-  private logger: Logger;
+  private logger = new Logger();
 
   constructor(
     @InjectRepository(TrainingBetEntity)
     private trainingBetRepository: Repository<TrainingBetEntity>,
 
-    private usersService: UsersService,
     private betDaysService: BetDaysService,
-    private systemLogsService: SystemLogsService,
-    private participantsService: ParticipantsService,
-  ) {
-    this.logger = new Logger();
+  ) {}
+
+  async validateTrainingBetStatus(
+    trainingBetId: number,
+    todayDate: moment.Moment,
+  ): Promise<TrainingBetsStatusEnum> {
+    const trainingBet = await this.findOne(trainingBetId);
+    const { status, initialDate, finalDate, betDays } = trainingBet;
+
+    const todayFormat = todayDate.format('YYYY-MM-DD');
+    const completed =
+      betDays.length === validateDaysComplete(betDays, todayDate).length;
+
+    const inProgress =
+      isAfter(finalDate, todayFormat, 'days') &&
+      (initialDate === todayFormat ||
+        isBefore(initialDate, todayFormat, 'days'));
+
+    if (completed) return TrainingBetsStatusEnum.ENCERRADA;
+    else if (inProgress) return TrainingBetsStatusEnum.EM_ANDAMENTO;
+    else return status;
   }
 
-  async validateUserWins() {
-    try {
-      const trainingBetsClosed = await this.trainingBetRepository.find({
-        where: {
-          status: StatusEnum.ENCERRADA,
-        },
-        relations: {
-          participants: { user: true },
-        },
-      });
-
-      /**
-       * Valida dentre cada aposta Encerrada, todos os participantes.
-       * Adicionando 1 vitória se NÃO foi desclassificado naquela aposta.
-       */
-      const usersWins: { id: number; wins: number }[] = [];
-      for (const trainingBet of trainingBetsClosed) {
-        trainingBet.participants.forEach((participant) => {
-          const userId = participant.user.id;
-          usersWins.push({ id: userId, wins: 0 });
-
-          if (participant.declassified === false) {
-            const userWins = usersWins.find((i) => i.id === userId);
-            if (userWins) userWins.wins++;
-          }
-        });
-      }
-
-      await Promise.all(
-        usersWins.map((user) =>
-          this.usersService.updateStatistics(user.id, user),
-        ),
-      );
-    } catch (e) {
-      this.logger.error(e);
-      await this.systemLogsService.upsert({
-        level: LogLevelEnum.ERROR,
-        source: 'TrainingBetsService.updateUserWins',
-        message: 'Falha ao atualizar os ganhos dos usuários',
-      });
-    }
-  }
-
-  async validateUserLosses(userId: number) {
+  async validateUserLossesAndWins(
+    userId: number,
+  ): Promise<Partial<UsersEntity>> {
     try {
       /**
        * Montagem da query diretamente com o filtro do usuário
        */
-      const trainingBetsClosed = await this.trainingBetRepository
+      const trainingBets = await this.trainingBetRepository
         .createQueryBuilder('traningBet')
         .leftJoinAndSelect('traningBet.participants', 'participants')
         .leftJoinAndSelect('participants.user', 'users')
@@ -96,68 +65,29 @@ export class TrainingBetsService {
 
       /**
        * Valida dentre cada aposta, todos os participantes.
-       * Adicionando 1 derrota se foi desclassificado naquela aposta.
+       *  - Derrota: se foi desclassificado.
+       *  - Vitória: se NÃO foi desclassificado e a aposta está ENCERRADA.
        */
-      const usersLosses: { id: number; losses: number }[] = [];
-      for (const trainingBet of trainingBetsClosed) {
-        trainingBet.participants.forEach((participant) => {
-          if (participant.declassified === true) {
-            const userId = participant.user.id;
+      const result: Partial<UsersEntity> = { wins: 0, losses: 0 };
 
-            const userWins = usersLosses.find((i) => i.id === userId);
-            if (userWins) userWins.losses++;
-            else usersLosses.push({ id: userId, losses: 1 });
+      for (const trainingBet of trainingBets) {
+        const { status, participants } = trainingBet;
+
+        participants.forEach((participant) => {
+          const { declassified } = participant;
+
+          if (declassified === true) {
+            result.losses += 1;
+          } else if (declassified === false && status === 'Encerrada') {
+            result.wins += 1;
           }
         });
       }
 
-      await Promise.all(
-        usersLosses.map((user) =>
-          this.usersService.updateStatistics(user.id, user),
-        ),
-      );
+      return result;
     } catch (e) {
       this.logger.error(e);
-      await this.systemLogsService.upsert({
-        level: LogLevelEnum.ERROR,
-        source: 'TrainingBetsService.updateUserLosses',
-        message: 'Falha ao atualizar as derrotas dos usuários',
-      });
-    }
-  }
-
-  async validateUserTotalFaults(userId: number) {
-    try {
-      const totalFaults =
-        await this.participantsService.getTotalFaultsFromUser(userId);
-
-      await this.usersService.updateStatistics(userId, { totalFaults });
-    } catch (e) {
-      this.logger.error(e);
-      await this.systemLogsService.upsert({
-        level: LogLevelEnum.ERROR,
-        source: 'TrainingBetsService.validateUserTotalFaults',
-        message: 'Falha ao atualizar as falhas totais dos usuários',
-      });
-    }
-  }
-
-  async validateUserTotalTrainingDays(userId: number) {
-    try {
-      const options = buildOptions({ userId });
-      const allUserParticipations =
-        await this.participantsService.findAll(options);
-
-      await this.usersService.updateStatistics(userId, {
-        totalTrainingDays: allUserParticipations.rows.length,
-      });
-    } catch (e) {
-      this.logger.error(e);
-      await this.systemLogsService.upsert({
-        level: LogLevelEnum.ERROR,
-        source: 'TrainingBetsService.validateUserTotalFaults',
-        message: 'Falha ao atualizar as falhas totais dos usuários',
-      });
+      throw e;
     }
   }
 

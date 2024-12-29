@@ -8,7 +8,7 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { Transform } from 'class-transformer';
-import { StatusEnum } from '../enum/status.enum';
+import { TrainingBetsStatusEnum } from '../enum/status.enum';
 import { BetDaysEntity } from '../../bet-days/entities/bet-days.entity';
 import { ParticipantsEntity } from '../../participants/entities/participants.entity';
 
@@ -35,10 +35,10 @@ export class TrainingBetEntity {
 
   @Column({
     type: 'enum',
-    enum: StatusEnum,
-    default: StatusEnum.AGENDADA,
+    enum: TrainingBetsStatusEnum,
+    default: TrainingBetsStatusEnum.AGENDADA,
   })
-  status: StatusEnum;
+  status: TrainingBetsStatusEnum;
 
   @OneToMany(() => ParticipantsEntity, (participant) => participant.trainingBet)
   participants: ParticipantsEntity[];

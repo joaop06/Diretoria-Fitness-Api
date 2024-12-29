@@ -8,16 +8,14 @@ import { SystemLogsService } from '../system-logs/system-logs.service';
 
 @Injectable()
 export class BetDaysService {
-  private logger: Logger;
+  private logger = new Logger();
 
   constructor(
     @InjectRepository(BetDaysEntity)
     private betDaysRepository: Repository<BetDaysEntity>,
 
     private systemLogsService: SystemLogsService,
-  ) {
-    this.logger = new Logger();
-  }
+  ) {}
 
   async bulkCreate(allBetDays: CreateBetDayDto[]) {
     try {
@@ -119,6 +117,18 @@ export class BetDaysService {
         level: LevelEnum.ERROR,
         message: `Falha ao atualizar aproveitamento do dia de treino ${betDayId}`,
       });
+    }
+  }
+
+  async getTotalTrainingDays(userId: number) {
+    try {
+      const days = await this.betDaysRepository.find({
+        where: { trainingReleases: { participant: { userId } } },
+      });
+
+      return days.length;
+    } catch (e) {
+      throw e;
     }
   }
 }

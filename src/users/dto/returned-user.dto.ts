@@ -52,7 +52,7 @@ export class ReturnedUserDto {
   totalTrainingDays: number;
 
   @IsNumber()
-  betsParticipated: number;
+  totalParticipations: number;
 
   @IsObject()
   userLogs: {

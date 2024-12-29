@@ -3,6 +3,7 @@ import * as moment from 'moment';
 import { Repository } from 'typeorm';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { UsersService } from '../users/users.service';
 import { BetDaysService } from '../bet-days/bet-days.service';
 import { CronJobsService } from '../cron-jobs/cron-jobs.service';
 import { UploadTrainingFileDto } from './dto/upload-training-file.dto';
@@ -17,6 +18,7 @@ export class TrainingReleasesService {
     @InjectRepository(TrainingReleasesEntity)
     private trainingReleasesRepository: Repository<TrainingReleasesEntity>,
 
+    private usersService: UsersService,
     private betDaysService: BetDaysService,
     private cronJobsService: CronJobsService,
     private participantsService: ParticipantsService,
@@ -63,6 +65,11 @@ export class TrainingReleasesService {
       const {
         user: { id: userId },
       } = participant;
+
+      // Atualiza dados do usuário
+      this.usersService.updateUserStatistics(userId);
+
+      // Atualiza a pontuação do usuário com o novo treino realizado
       this.cronJobsService.updateStatisticsRanking(userId);
 
       // Atualiza o aproveitamento do Participante e do Dia de Treino

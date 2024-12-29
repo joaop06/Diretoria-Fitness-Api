@@ -8,7 +8,7 @@
   "scripts": {
     "start": "node dist/src/main.js",
     "typeorm": "ts-node ./node_modules/typeorm/cli",
-    "dev": "npm run build && node dist/src/main.js --watch",
+    "dev": "npm run build && nodemon dist/src/main.js",
     "copy-widgets": "copyfiles -u 1 \"public/widgets/**/*\" dist/public",
     "copy-templates": "copyfiles -u 1 \"src/email/templates/**/*\" dist/src",
     "build": "tsc -p tsconfig.build.json && npm run copy-templates && npm run copy-widgets",
@@ -42,6 +42,7 @@
     "multer": "^1.4.5-lts.1",
     "mysql2": "^3.11.5",
     "nodemailer": "^6.9.16",
+    "nodemon": "^3.1.9",
     "passport-jwt": "^4.0.1",
     "reflect-metadata": "^0.2.0",
     "rxjs": "^7.8.1",

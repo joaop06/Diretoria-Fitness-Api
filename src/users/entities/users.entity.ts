@@ -67,6 +67,9 @@ export class UsersEntity {
   @Column({ default: 0 })
   totalTrainingDays: number;
 
+  @Column({ default: 0 })
+  totalParticipations: number;
+
   @Column()
   profileImagePath: string;
 

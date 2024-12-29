@@ -1,18 +1,20 @@
 import * as moment from 'moment';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Injectable, Logger } from '@nestjs/common';
+import { UsersService } from '../users/users.service';
+import { validateDaysComplete } from '../../helper/dates';
 import { UsersEntity } from '../users/entities/users.entity';
 import { LevelEnum } from '../system-logs/enum/log-level.enum';
 import { ParticipantsEntity } from './entities/participants.entity';
 import { CreateParticipantDto } from './dto/create-participant.dto';
 import { SystemLogsService } from '../system-logs/system-logs.service';
+import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import { FindOptionsDto, FindReturnModelDto } from '../../public/dto/find.dto';
 import { TrainingBetEntity } from '../training-bets/entities/training-bet.entity';
 
 @Injectable()
 export class ParticipantsService {
-  private logger: Logger;
+  private logger = new Logger();
 
   constructor(
     @InjectRepository(ParticipantsEntity)
@@ -21,22 +23,18 @@ export class ParticipantsService {
     @InjectRepository(TrainingBetEntity)
     private trainingBetRepository: Repository<TrainingBetEntity>,
 
-    @InjectRepository(UsersEntity)
-    private usersRepository: Repository<UsersEntity>,
+    @Inject(forwardRef(() => UsersService))
+    private usersService: UsersService,
 
     private systemLogsService: SystemLogsService,
-  ) {
-    this.logger = new Logger();
-  }
+  ) {}
 
   async create(object: CreateParticipantDto): Promise<ParticipantsEntity> {
     try {
       const { userId, trainingBetId } = object;
 
       // Busca do usuário para participação
-      const user = await this.usersRepository.findOne({
-        where: { id: userId },
-      });
+      const user = (await this.usersService.findOne(userId)) as UsersEntity;
       if (!user) throw new Error(`Usuário não encontrado`);
 
       // Busca da aposta
@@ -71,6 +69,8 @@ export class ParticipantsService {
       return await this.participantsRepository.save(newParticipant);
     } catch (e) {
       throw e;
+    } finally {
+      await this.usersService.updateUserStatistics(object.userId);
     }
   }
 
@@ -117,6 +117,12 @@ export class ParticipantsService {
     }
   }
 
+  async getTotalParticipations(userId: number) {
+    return await this.participantsRepository.count({
+      where: { user: { id: userId } },
+    });
+  }
+
   async getTotalFaultsFromUser(userId: number): Promise<number> {
     try {
       const participants = await this.participantsRepository.find({
@@ -146,22 +152,16 @@ export class ParticipantsService {
       } = participant;
 
       const today = moment().add(1, 'days'); // +1 dia para considerar o dia atual
-      const betDaysComplete = betDays.filter(
-        (betDay) =>
-          today.startOf('day').isAfter(moment(betDay.day)) &&
-          (today.format('DD') !== moment(betDay.day).format('DD') ||
-            (today.format('MM') !== moment(betDay.day).format('MM') &&
-              today.format('DD') === moment(betDay.day).format('DD'))),
-      );
+      const completeBettingDays = validateDaysComplete(betDays, today);
 
-      const quantityBetDays = betDaysComplete.length;
+      const quantityBetDays = completeBettingDays.length;
       const quantityTraining = trainingReleases.length;
 
       const totalFaults = quantityBetDays - quantityTraining;
 
       // Cálculo do aproveitamento em percentual
       const utilization = parseFloat(
-        (100 - (totalFaults / betDaysComplete.length) * 100).toFixed(2),
+        (100 - (totalFaults / completeBettingDays.length) * 100).toFixed(2),
       );
 
       // Atualiza o registro do dia

@@ -1,6 +1,5 @@
 import * as fs from 'fs';
 import * as bcrypt from 'bcryptjs';
-import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { readFiles } from '../../helper/read.files';
 import { EmailService } from '../email/email.service';
@@ -10,29 +9,55 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { ReturnedUserDto } from './dto/returned-user.dto';
 import { RankingService } from '../ranking/ranking.service';
+import { BetDaysService } from '../bet-days/bet-days.service';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { UsersLogsService } from '../users-logs/users-logs.service';
 import { Exception } from '../../public/interceptors/exception.filter';
 import { UploadProfileImageDto } from './dto/upload-profile-image.dto';
-import { UpdateStatisticsUserDto } from './dto/update-statistics-user.dto';
+import { SystemLogsService } from '../system-logs/system-logs.service';
+import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
+import { ParticipantsService } from '../participants/participants.service';
+import { TrainingBetsService } from '../training-bets/training-bets.service';
+import { LevelEnum as LogLevelEnum } from '../system-logs/enum/log-level.enum';
 import { FindOptionsDto, FindReturnModelDto } from '../../public/dto/find.dto';
-import { ParticipantsEntity } from '../participants/entities/participants.entity';
 
 @Injectable()
 export class UsersService {
+  private logger = new Logger();
+
   constructor(
     @InjectRepository(UsersEntity)
     private usersRepository: Repository<UsersEntity>,
 
-    @InjectRepository(ParticipantsEntity)
-    private participantsRepository: Repository<ParticipantsEntity>,
-
-    private rankingService: RankingService,
-
-    private usersLogsService: UsersLogsService,
-
     private readonly emailService: EmailService,
+
+    private readonly betDaysService: BetDaysService,
+
+    private readonly rankingService: RankingService,
+
+    private readonly usersLogsService: UsersLogsService,
+
+    private readonly systemLogsService: SystemLogsService,
+
+    private readonly trainingBetsService: TrainingBetsService,
+
+    @Inject(forwardRef(() => ParticipantsService))
+    private readonly participantsService: ParticipantsService,
   ) {}
+
+  async saveAndSendVerificationCode(
+    userId: number,
+    name: string,
+    email: string,
+  ): Promise<void> {
+    const verificationCode = Math.floor(Math.random() * 1000000);
+
+    // Atualize o usuário com o código de verificação
+    await this.usersRepository.update(userId, { verificationCode });
+
+    // Enviar e-mail de verificação
+    this.emailService.sendVerificationCode(name, email, verificationCode);
+  }
 
   async create(
     object: CreateUserDto,
@@ -67,20 +92,6 @@ export class UsersService {
         throw e;
       }
     }
-  }
-
-  async saveAndSendVerificationCode(
-    userId: number,
-    name: string,
-    email: string,
-  ): Promise<void> {
-    const verificationCode = Math.floor(Math.random() * 1000000);
-
-    // Atualize o usuário com o código de verificação
-    await this.usersRepository.update(userId, { verificationCode });
-
-    // Enviar e-mail de verificação
-    this.emailService.sendVerificationCode(name, email, verificationCode);
   }
 
   async update(id: number, object: UpdateUserDto) {
@@ -154,15 +165,7 @@ export class UsersService {
     return isNaN(bmi) ? 0 : bmi;
   }
 
-  async updateStatistics(id: number, object: UpdateStatisticsUserDto) {
-    try {
-      return await this.usersRepository.update(id, object);
-    } catch (e) {
-      throw e;
-    }
-  }
-
-  async findOne(id: number): Promise<ReturnedUserDto> {
+  async findOne(id: number): Promise<ReturnedUserDto | UsersEntity> {
     try {
       const user = await this.usersRepository.findOne({
         where: { id },
@@ -177,17 +180,11 @@ export class UsersService {
         (log) => log.fieldName === 'weight',
       );
 
-      // Total de apostas participadas
-      const betsParticipated = await this.participantsRepository.count({
-        where: { user: { id } },
-      });
-
       // Leitura da Foto de Perfil
       user.profileImagePath = readFiles(user.profileImagePath);
 
       return {
         ...user,
-        betsParticipated,
         userLogs: {
           bmiLogs,
           heightLogs,
@@ -239,6 +236,37 @@ export class UsersService {
     } catch (e) {
       fs.unlink(object.profileImagePath, () => {});
       throw e;
+    }
+  }
+
+  async updateUserStatistics(userId: number) {
+    try {
+      const { wins, losses } =
+        await this.trainingBetsService.validateUserLossesAndWins(userId);
+
+      const totalTrainingDays =
+        await this.betDaysService.getTotalTrainingDays(userId);
+      const totalFaults =
+        await this.participantsService.getTotalFaultsFromUser(userId);
+      const totalParticipations =
+        await this.participantsService.getTotalParticipations(userId);
+
+      await this.usersRepository.update(userId, {
+        wins,
+        losses,
+        totalFaults,
+        totalTrainingDays,
+        totalParticipations,
+      });
+    } catch (e) {
+      const message = `Falha ao atualizar estatísticas do usuário ${userId}`;
+      this.logger.error(`${message}: ${e.message}`);
+
+      await this.systemLogsService.upsert({
+        message,
+        level: LogLevelEnum.ERROR,
+        source: 'TrainingBetsService.updateStatisticsBets',
+      });
     }
   }
 }

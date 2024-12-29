@@ -1,6 +1,6 @@
-import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { UsersEntity } from '../users/entities/users.entity';
+import { forwardRef, Module } from '@nestjs/common';
+import { UsersModule } from '../users/users.module';
 import { ParticipantsService } from './participants.service';
 import { ParticipantsController } from './participants.controller';
 import { ParticipantsEntity } from './entities/participants.entity';
@@ -12,11 +12,8 @@ import { TrainingBetEntity } from '../training-bets/entities/training-bet.entity
   providers: [ParticipantsService],
   controllers: [ParticipantsController],
   imports: [
-    TypeOrmModule.forFeature([
-      ParticipantsEntity,
-      UsersEntity,
-      TrainingBetEntity,
-    ]),
+    TypeOrmModule.forFeature([ParticipantsEntity, TrainingBetEntity]),
+    forwardRef(() => UsersModule),
     SystemLogsModule,
   ],
 })

@@ -25,12 +25,7 @@ export class RankingService {
 
   async calculateUserScore(user: UsersEntity): Promise<number> {
     // Dados do usuário
-    const { wins, losses, totalFaults } = user;
-
-    // Total de apostas participadas
-    const betsParticipated = await this.participantsRepository.count({
-      where: { user: { id: user.id } },
-    });
+    const { wins, losses, totalFaults, totalParticipations } = user;
 
     // Total de dias treinados
     const trainingDays = await this.trainingReleasesRepository.count({
@@ -41,14 +36,14 @@ export class RankingService {
     const weightWin = 10, // Peso da vitória
       weightLoss = 5, // Peso da derrota
       weightFault = 2, // Peso da falha
-      weightParticipant = 3, // Peso da participação
+      weightParticipations = 3, // Peso da participação
       weightTrainingDay = 1; // Peso do dia de treino
 
     const score =
       wins * weightWin -
       losses * weightLoss -
       totalFaults * weightFault +
-      betsParticipated * weightParticipant +
+      totalParticipations * weightParticipations +
       trainingDays * weightTrainingDay;
 
     return score;
