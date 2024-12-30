@@ -1,22 +1,27 @@
 import { join } from 'path';
+import { config } from 'dotenv';
 import { Module } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { EmailService } from './email.service';
 import { EmailController } from './email.controller';
 import { MailerModule } from '@nestjs-modules/mailer';
 import { SystemLogsModule } from '../system-logs/system-logs.module';
 import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handlebars.adapter';
 
+config();
+const configService = new ConfigService();
+
 @Module({
   imports: [
     SystemLogsModule,
     MailerModule.forRoot({
       transport: {
-        port: 587,
-        secure: false,
-        host: 'smtp.gmail.com',
+        host: configService.get('EMAIL_HOST'),
+        port: +configService.get('EMAIL_PORT'),
+        secure: configService.get('EMAIL_SECURE') === 'true',
         auth: {
-          pass: 'bgtz llkk kwzt vukh',
-          user: 'diretoria.fitness2020@gmail.com',
+          pass: configService.get('EMAIL_PASS'),
+          user: configService.get('EMAIL_USER'),
         },
       },
       defaults: {
