@@ -7,7 +7,6 @@ const configService = new ConfigService();
 
 export const dataSourceOptions: DataSourceOptions = {
     type: 'mysql',
-    synchronize: false,
     host: configService.get('DB_HOST'),
     port: configService.get('DB_PORT'),
     database: configService.get('DB_NAME'),
@@ -15,6 +14,7 @@ export const dataSourceOptions: DataSourceOptions = {
     password: configService.get('DB_PASSWORD'),
     migrations: ['dist/config/migrations/*.js'],
     entities: [__dirname + '/../**/*.entity{.ts,.js}'],
+    synchronize: !!configService.get('SYNCHRONIZE_DB'),
 };
 
 const dataSource = new DataSource(dataSourceOptions);
