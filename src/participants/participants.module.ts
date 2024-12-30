@@ -13,8 +13,8 @@ import { TrainingBetEntity } from '../training-bets/entities/training-bet.entity
   controllers: [ParticipantsController],
   imports: [
     TypeOrmModule.forFeature([ParticipantsEntity, TrainingBetEntity]),
-    forwardRef(() => UsersModule),
     SystemLogsModule,
+    forwardRef(() => UsersModule),
   ],
 })
 export class ParticipantsModule {}

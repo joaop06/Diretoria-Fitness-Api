@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { UsersModule } from '../users/users.module';
 import { CronJobsService } from './cron-jobs.service';
 import { RankingModule } from '../ranking/ranking.module';
@@ -11,11 +11,11 @@ import { TrainingBetsModule } from '../training-bets/training-bets.module';
   exports: [CronJobsService],
   providers: [CronJobsService],
   imports: [
-    UsersModule,
+    forwardRef(() => UsersModule),
     BetDaysModule,
     RankingModule,
     SystemLogsModule,
-    ParticipantsModule,
+    forwardRef(() => ParticipantsModule),
     TrainingBetsModule,
   ],
 })

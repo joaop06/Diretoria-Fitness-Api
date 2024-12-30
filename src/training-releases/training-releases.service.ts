@@ -20,13 +20,14 @@ export class TrainingReleasesService {
 
     private usersService: UsersService,
     private betDaysService: BetDaysService,
-    private cronJobsService: CronJobsService,
     private participantsService: ParticipantsService,
   ) {}
 
   async create(
     object: CreateTrainingReleasesDto,
   ): Promise<TrainingReleasesEntity> {
+    let betId: number, userId: number;
+
     try {
       const betDay = await this.betDaysService.findOne(object.betDayId);
       if (!betDay) throw new Error('Aposta não ocorre neste dia');
@@ -58,27 +59,24 @@ export class TrainingReleasesService {
       });
       const result = await this.trainingReleasesRepository.save(newTrainingBet);
 
+      userId = participant.user.id;
+      betId = participant.trainingBet.id;
+      return result;
+    } catch (e) {
+      throw e;
+    } finally {
       /** Atualiza estatísticas da Aposta */
-      const { id: betId } = participant.trainingBet;
-      this.cronJobsService.updateStatisticsBets(betId);
-
-      const {
-        user: { id: userId },
-      } = participant;
+      CronJobsService.updateStatisticsBets(betId);
 
       // Atualiza dados do usuário
-      this.usersService.updateUserStatistics(userId);
+      await this.usersService.updateUserStatistics(userId);
 
       // Atualiza a pontuação do usuário com o novo treino realizado
-      this.cronJobsService.updateStatisticsRanking(userId);
+      CronJobsService.updateStatisticsRanking(userId);
 
       // Atualiza o aproveitamento do Participante e do Dia de Treino
       this.betDaysService.updateUtilization(object.betDayId);
       this.participantsService.updateUtilization(object.participantId);
-
-      return result;
-    } catch (e) {
-      throw e;
     }
   }
 

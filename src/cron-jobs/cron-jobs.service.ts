@@ -1,12 +1,12 @@
 import { Not } from 'typeorm';
 import * as moment from 'moment';
 import { Cron, Timeout } from '@nestjs/schedule';
-import { Injectable, Logger } from '@nestjs/common';
 import { UsersService } from '../users/users.service';
 import { validateDaysComplete } from '../../helper/dates';
 import { RankingService } from '../ranking/ranking.service';
 import { BetDaysService } from '../bet-days/bet-days.service';
 import { SystemLogsService } from '../system-logs/system-logs.service';
+import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import { ParticipantsService } from '../participants/participants.service';
 import { TrainingBetsStatusEnum } from '../training-bets/enum/status.enum';
 import { TrainingBetsService } from '../training-bets/training-bets.service';
@@ -14,48 +14,68 @@ import { LevelEnum as LogLevelEnum } from '../system-logs/enum/log-level.enum';
 
 @Injectable()
 export class CronJobsService {
-  private logger = new Logger();
+  static logger = new Logger();
+
+  static usersService: UsersService;
+  static betDaysService: BetDaysService;
+  static rankingService: RankingService;
+  static systemLogsService: SystemLogsService;
+  static participantsService?: ParticipantsService;
+  static trainingBetsService: TrainingBetsService;
 
   constructor(
-    private usersService: UsersService,
-    private betDaysService: BetDaysService,
-    private rankingService: RankingService,
-    private systemLogsService: SystemLogsService,
-    private participantsService: ParticipantsService,
-    private trainingBetsService: TrainingBetsService,
-  ) {}
+    @Inject(forwardRef(() => UsersService))
+    public usersService: UsersService,
 
-  private percentageUtilization(dividend: number, divider: number) {
+    public betDaysService: BetDaysService,
+    public rankingService: RankingService,
+    public systemLogsService: SystemLogsService,
+
+    @Inject(forwardRef(() => ParticipantsService))
+    public participantsService: ParticipantsService,
+
+    public trainingBetsService: TrainingBetsService,
+  ) {
+    CronJobsService.usersService = usersService;
+    CronJobsService.betDaysService = betDaysService;
+    CronJobsService.rankingService = rankingService;
+    CronJobsService.systemLogsService = systemLogsService;
+    CronJobsService.participantsService = participantsService;
+    CronJobsService.trainingBetsService = trainingBetsService;
+  }
+
+  private static percentageUtilization(dividend: number, divider: number) {
     return parseFloat((100 - (dividend / divider) * 100).toFixed(2));
   }
   @Cron('0 0 * * *') // Executa todo dia à meia-noite
   async updateStatisticsBetsDaily() {
-    await this.updateStatisticsBets();
+    await CronJobsService.updateStatisticsBets();
   }
   @Timeout(500) // Executa após 500ms (apenas um exemplo)
   async updateStatisticsBetsTimeout() {
-    await this.updateStatisticsBets();
+    await CronJobsService.updateStatisticsBets();
   }
 
-  async updateStatisticsBets(betId?: number) {
+  static async updateStatisticsBets(betId?: number) {
     let logLevel = LogLevelEnum.INFO;
     let logMessage = 'Estatísticas das Apostas atualizadas';
     try {
-      const { rows: trainingBets } = await this.trainingBetsService.findAll({
-        relations: [
-          'betDays',
-          'betDays.trainingReleases',
-          'participants',
-          'participants.user',
-          'participants.trainingReleases',
-          'participants.trainingReleases.betDay',
-        ],
-        where: betId
-          ? { id: betId }
-          : {
-              status: Not(TrainingBetsStatusEnum.AGENDADA),
-            },
-      });
+      const { rows: trainingBets } =
+        await CronJobsService.trainingBetsService.findAll({
+          relations: [
+            'betDays',
+            'betDays.trainingReleases',
+            'participants',
+            'participants.user',
+            'participants.trainingReleases',
+            'participants.trainingReleases.betDay',
+          ],
+          where: betId
+            ? { id: betId }
+            : {
+                status: Not(TrainingBetsStatusEnum.AGENDADA),
+              },
+        });
 
       const today = moment();
       for (const trainingBet of trainingBets) {
@@ -179,7 +199,7 @@ export class CronJobsService {
       );
 
       // Atualiza a pontuação geral dos Usuários
-      await this.updateStatisticsRanking();
+      await CronJobsService.updateStatisticsRanking();
 
       if (betId) logMessage = `Apostas ${betId} foi atualizada`;
     } catch (e) {
@@ -197,7 +217,7 @@ export class CronJobsService {
   }
 
   @Cron('2 * * * *')
-  async updateStatisticsRanking(userId?: number) {
+  static async updateStatisticsRanking(userId?: number) {
     let logLevel = LogLevelEnum.INFO;
     let logMessage = 'Ranking de usuários atualizado';
 

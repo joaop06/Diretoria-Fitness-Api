@@ -5,6 +5,7 @@ import { UsersService } from '../users/users.service';
 import { validateDaysComplete } from '../../helper/dates';
 import { UsersEntity } from '../users/entities/users.entity';
 import { LevelEnum } from '../system-logs/enum/log-level.enum';
+import { CronJobsService } from '../cron-jobs/cron-jobs.service';
 import { ParticipantsEntity } from './entities/participants.entity';
 import { CreateParticipantDto } from './dto/create-participant.dto';
 import { SystemLogsService } from '../system-logs/system-logs.service';
@@ -23,10 +24,10 @@ export class ParticipantsService {
     @InjectRepository(TrainingBetEntity)
     private trainingBetRepository: Repository<TrainingBetEntity>,
 
+    private systemLogsService: SystemLogsService,
+
     @Inject(forwardRef(() => UsersService))
     private usersService: UsersService,
-
-    private systemLogsService: SystemLogsService,
   ) {}
 
   async create(object: CreateParticipantDto): Promise<ParticipantsEntity> {
@@ -66,11 +67,15 @@ export class ParticipantsService {
         user,
         trainingBet,
       });
+
       return await this.participantsRepository.save(newParticipant);
     } catch (e) {
       throw e;
     } finally {
       await this.usersService.updateUserStatistics(object.userId);
+
+      // Atualiza a pontuação do usuário com o novo treino realizado
+      CronJobsService.updateStatisticsRanking(object.userId);
     }
   }
 
