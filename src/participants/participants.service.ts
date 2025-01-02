@@ -72,10 +72,8 @@ export class ParticipantsService {
     } catch (e) {
       throw e;
     } finally {
-      await this.usersService.updateUserStatistics(object.userId);
-
       // Atualiza a pontuação do usuário com o novo treino realizado
-      CronJobsService.updateStatisticsRanking(object.userId);
+      await CronJobsService.updateStatisticsRanking(object.userId);
     }
   }
 
@@ -84,6 +82,9 @@ export class ParticipantsService {
       return await this.participantsRepository.update(id, object);
     } catch (e) {
       throw e;
+    } finally {
+      // Atualiza a pontuação do usuário com o novo treino realizado
+      await CronJobsService.updateStatisticsRanking(object.userId);
     }
   }
 

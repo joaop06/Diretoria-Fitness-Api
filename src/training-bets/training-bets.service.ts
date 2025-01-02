@@ -4,14 +4,16 @@ config();
 import * as moment from 'moment';
 import { InjectRepository } from '@nestjs/typeorm';
 import { readFiles } from '../../helper/read.files';
-import { Injectable, Logger } from '@nestjs/common';
 import { Repository, FindManyOptions } from 'typeorm';
+import { UsersService } from '../users/users.service';
 import { TrainingBetsStatusEnum } from './enum/status.enum';
 import { UsersEntity } from '../users/entities/users.entity';
 import { BetDaysService } from '../bet-days/bet-days.service';
+import { CronJobsService } from '../cron-jobs/cron-jobs.service';
 import { TrainingBetEntity } from './entities/training-bet.entity';
 import { CreateTrainingBetDto } from './dto/create-training-bet.dto';
 import { Exception } from '../../public/interceptors/exception.filter';
+import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import { isAfter, isBefore, validateDaysComplete } from '../../helper/dates';
 import { FindOptionsDto, FindReturnModelDto } from '../../public/dto/find.dto';
 
@@ -21,9 +23,12 @@ export class TrainingBetsService {
 
   constructor(
     @InjectRepository(TrainingBetEntity)
-    private trainingBetRepository: Repository<TrainingBetEntity>,
+    private readonly trainingBetRepository: Repository<TrainingBetEntity>,
 
-    private betDaysService: BetDaysService,
+    @Inject(forwardRef(() => UsersService))
+    private readonly usersService: UsersService,
+
+    private readonly betDaysService: BetDaysService,
   ) {}
 
   async validateTrainingBetStatus(
@@ -94,7 +99,7 @@ export class TrainingBetsService {
     }
   }
 
-  async #validatePeriodConflict(object: Partial<TrainingBetEntity>) {
+  private async validatePeriodConflict(object: Partial<TrainingBetEntity>) {
     let conflict: TrainingBetEntity | null;
     if (object.id) {
       conflict = await this.trainingBetRepository
@@ -124,7 +129,7 @@ export class TrainingBetsService {
     }
   }
 
-  #validateBetStarted(initialDate: Date | string) {
+  private validateBetStarted(initialDate: Date | string) {
     const now = moment();
     const currDay = parseInt(now.format('DD'));
     const currMonth = parseInt(now.format('MM'));
@@ -146,7 +151,7 @@ export class TrainingBetsService {
     }
   }
 
-  #defineDuration(object: Partial<TrainingBetEntity>) {
+  private defineDuration(object: Partial<TrainingBetEntity>) {
     // +1 para considerar também o dia atual
     const duration =
       moment(object.finalDate).diff(object.initialDate, 'days') + 1;
@@ -154,7 +159,7 @@ export class TrainingBetsService {
     return { ...object, duration };
   }
 
-  async #syncBetDays(
+  private async syncBetDays(
     trainingBetId: number,
     duration: number,
     initialDate: Date | string,
@@ -224,16 +229,16 @@ export class TrainingBetsService {
       }
 
       // Valida se há conflito das datas
-      await this.#validatePeriodConflict(object);
+      await this.validatePeriodConflict(object);
 
       // Valida se a aposta já foi iniciada
-      this.#validateBetStarted(object.initialDate);
+      this.validateBetStarted(object.initialDate);
 
-      const newObject = this.#defineDuration(object);
+      const newObject = this.defineDuration(object);
       const newTrainingBet = this.trainingBetRepository.create(newObject);
       const result = await this.trainingBetRepository.save(newTrainingBet);
 
-      await this.#syncBetDays(result.id, result.duration, object.initialDate);
+      await this.syncBetDays(result.id, result.duration, object.initialDate);
 
       return result;
     } catch (e) {
@@ -265,10 +270,10 @@ export class TrainingBetsService {
       };
 
       // Valida se há conflito das datas
-      await this.#validatePeriodConflict({ id, ...newTrainingBet });
+      await this.validatePeriodConflict({ id, ...newTrainingBet });
 
       // Valida se a aposta já foi iniciada
-      if (object.initialDate) this.#validateBetStarted(object.initialDate);
+      if (object.initialDate) this.validateBetStarted(object.initialDate);
 
       if (['Em Andamente', 'Encerrada'].includes(trainingBet.status)) {
         throw new Error(
@@ -276,13 +281,13 @@ export class TrainingBetsService {
         );
       }
 
-      newTrainingBet = this.#defineDuration(newTrainingBet);
+      newTrainingBet = this.defineDuration(newTrainingBet);
       const result = await this.trainingBetRepository.update(
         id,
         newTrainingBet,
       );
 
-      await this.#syncBetDays(
+      await this.syncBetDays(
         id,
         newTrainingBet.duration,
         newTrainingBet.initialDate,
@@ -292,17 +297,26 @@ export class TrainingBetsService {
     } catch (e) {
       this.logger.error(e);
       throw e;
+    } finally {
+      /** Atualiza estatísticas da Aposta */
+      await CronJobsService.updateStatisticsBets(id);
     }
   }
 
   async delete(id: number): Promise<any> {
+    const userIds: number[] = [];
     try {
+      userIds.push(...(await this.getUsersParticipantsFromBet(id)));
+
       const result = await this.trainingBetRepository.delete(id);
 
       return result;
     } catch (e) {
       this.logger.error(e);
       throw e;
+    } finally {
+      // Atualiza a pontuação do usuário com o novo treino realizado
+      await CronJobsService.updateStatisticsRanking();
     }
   }
 
@@ -427,5 +441,18 @@ export class TrainingBetsService {
     const [rows, count] =
       await this.trainingBetRepository.findAndCount(options);
     return { rows, count };
+  }
+
+  async getUsersParticipantsFromBet(betId: number): Promise<number[]> {
+    try {
+      const bet = await this.findById(betId, {
+        relations: { participants: true },
+      });
+      const userIds = bet.participants.map((participant) => participant.userId);
+
+      return userIds;
+    } catch (e) {
+      throw e;
+    }
   }
 }

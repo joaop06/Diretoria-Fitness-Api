@@ -4,7 +4,6 @@ import { RankingService } from './ranking.service';
 import { RankingController } from './ranking.controller';
 import { RankingEntity } from './entities/ranking.entity';
 import { UsersEntity } from '../users/entities/users.entity';
-import { ParticipantsEntity } from '../participants/entities/participants.entity';
 import { TrainingReleasesEntity } from '../training-releases/entities/training-releases.entity';
 
 @Module({
@@ -15,7 +14,6 @@ import { TrainingReleasesEntity } from '../training-releases/entities/training-r
     TypeOrmModule.forFeature([
       UsersEntity,
       RankingEntity,
-      ParticipantsEntity,
       TrainingReleasesEntity,
     ]),
   ],

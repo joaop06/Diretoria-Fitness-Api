@@ -26,7 +26,7 @@ export class TrainingReleasesService {
   async create(
     object: CreateTrainingReleasesDto,
   ): Promise<TrainingReleasesEntity> {
-    let betId: number, userId: number;
+    let betId: number;
 
     try {
       const betDay = await this.betDaysService.findOne(object.betDayId);
@@ -59,20 +59,13 @@ export class TrainingReleasesService {
       });
       const result = await this.trainingReleasesRepository.save(newTrainingBet);
 
-      userId = participant.user.id;
       betId = participant.trainingBet.id;
       return result;
     } catch (e) {
       throw e;
     } finally {
       /** Atualiza estatísticas da Aposta */
-      CronJobsService.updateStatisticsBets(betId);
-
-      // Atualiza dados do usuário
-      await this.usersService.updateUserStatistics(userId);
-
-      // Atualiza a pontuação do usuário com o novo treino realizado
-      CronJobsService.updateStatisticsRanking(userId);
+      await CronJobsService.updateStatisticsBets(betId);
 
       // Atualiza o aproveitamento do Participante e do Dia de Treino
       this.betDaysService.updateUtilization(object.betDayId);
@@ -111,14 +104,6 @@ export class TrainingReleasesService {
       const [rows, count] =
         await this.trainingReleasesRepository.findAndCount(options);
       return { rows, count };
-    } catch (e) {
-      throw e;
-    }
-  }
-
-  async delete(id: number): Promise<any> {
-    try {
-      return await this.trainingReleasesRepository.delete(id);
     } catch (e) {
       throw e;
     }

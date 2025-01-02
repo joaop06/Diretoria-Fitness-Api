@@ -4,7 +4,6 @@ import { readFiles } from '../../helper/read.files';
 import { FindOptionsWhere, Repository } from 'typeorm';
 import { RankingEntity } from './entities/ranking.entity';
 import { UsersEntity } from '../users/entities/users.entity';
-import { ParticipantsEntity } from '../participants/entities/participants.entity';
 import { TrainingReleasesEntity } from '../training-releases/entities/training-releases.entity';
 
 @Injectable()
@@ -16,15 +15,14 @@ export class RankingService {
     @InjectRepository(RankingEntity)
     private rankingRepository: Repository<RankingEntity>,
 
-    @InjectRepository(ParticipantsEntity)
-    private participantsRepository: Repository<ParticipantsEntity>,
-
     @InjectRepository(TrainingReleasesEntity)
     private trainingReleasesRepository: Repository<TrainingReleasesEntity>,
   ) {}
 
-  async calculateUserScore(user: UsersEntity): Promise<number> {
+  async calculateUserScore(userId: number): Promise<number> {
     // Dados do usuário
+    const user = await this.usersRepository.findOne({ where: { id: userId } });
+
     const { wins, losses, totalFaults, totalParticipations } = user;
 
     // Total de dias treinados

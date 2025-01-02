@@ -191,13 +191,6 @@ export class CronJobsService {
         ),
       );
 
-      await Promise.all(
-        [...new Set(userIds)].map(
-          async (userId) =>
-            await this.usersService.updateUserStatistics(userId),
-        ),
-      );
-
       // Atualiza a pontuação geral dos Usuários
       await CronJobsService.updateStatisticsRanking();
 
@@ -227,12 +220,22 @@ export class CronJobsService {
       const { rows: users } = await this.usersService.findAll({ where });
 
       /**
+       * Atualiza as estatísticas dos usuários
+       * antes de calcular as pontuações
+       */
+      await Promise.all(
+        users.map(async (user) => {
+          await this.usersService.updateUserStatistics(user.id);
+        }),
+      );
+
+      /**
        * Calcula as pontuações de todos os usuários
        */
       const scores = await Promise.all(
         users.map(async (user) => ({
           userId: user.id,
-          score: await this.rankingService.calculateUserScore(user),
+          score: await this.rankingService.calculateUserScore(user.id),
         })),
       );
 

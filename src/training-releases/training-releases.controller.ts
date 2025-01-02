@@ -19,7 +19,6 @@ import {
   Controller,
   UploadedFile,
   UseInterceptors,
-  Delete,
 } from '@nestjs/common';
 
 const uploadDir = path.join(__dirname, '../../public/imagesReleases');
@@ -89,15 +88,6 @@ export class TrainingReleasesController {
   ): Promise<FindReturnModelDto<TrainingReleasesEntity>> {
     try {
       return await this.trainingReleasesService.findAll(options);
-    } catch (e) {
-      new Exception(e);
-    }
-  }
-
-  @Delete(':id')
-  async delete(@Param('id') id: string) {
-    try {
-      return await this.trainingReleasesService.delete(+id);
     } catch (e) {
       new Exception(e);
     }

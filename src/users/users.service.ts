@@ -1,5 +1,6 @@
 import * as fs from 'fs';
 import * as bcrypt from 'bcryptjs';
+import { isArray } from 'class-validator';
 import { InjectRepository } from '@nestjs/typeorm';
 import { readFiles } from '../../helper/read.files';
 import { EmailService } from '../email/email.service';
@@ -239,34 +240,43 @@ export class UsersService {
     }
   }
 
-  async updateUserStatistics(userId: number) {
+  async updateUserStatistics(usersId: number | number[]) {
     try {
-      const { wins, losses } =
-        await this.trainingBetsService.validateUserLossesAndWins(userId);
+      const updateUser = async (userId: number) => {
+        try {
+          const { wins, losses } =
+            await this.trainingBetsService.validateUserLossesAndWins(userId);
 
-      const totalTrainingDays =
-        await this.betDaysService.getTotalTrainingDays(userId);
-      const totalFaults =
-        await this.participantsService.getTotalFaultsFromUser(userId);
-      const totalParticipations =
-        await this.participantsService.getTotalParticipations(userId);
+          const totalTrainingDays =
+            await this.betDaysService.getTotalTrainingDays(userId);
+          const totalFaults =
+            await this.participantsService.getTotalFaultsFromUser(userId);
+          const totalParticipations =
+            await this.participantsService.getTotalParticipations(userId);
 
-      await this.usersRepository.update(userId, {
-        wins,
-        losses,
-        totalFaults,
-        totalTrainingDays,
-        totalParticipations,
-      });
+          await this.usersRepository.update(userId, {
+            wins,
+            losses,
+            totalFaults,
+            totalTrainingDays,
+            totalParticipations,
+          });
+        } catch (e) {
+          const message = `Falha ao atualizar estatísticas do usuário ${userId}`;
+          this.logger.error(`${message}: ${e.message}`);
+
+          await this.systemLogsService.upsert({
+            message,
+            level: LogLevelEnum.ERROR,
+            source: 'TrainingBetsService.updateStatisticsBets',
+          });
+        }
+      };
+
+      usersId = isArray(usersId) ? usersId : [usersId];
+      await Promise.all(usersId.map((userId) => updateUser(userId)));
     } catch (e) {
-      const message = `Falha ao atualizar estatísticas do usuário ${userId}`;
-      this.logger.error(`${message}: ${e.message}`);
-
-      await this.systemLogsService.upsert({
-        message,
-        level: LogLevelEnum.ERROR,
-        source: 'TrainingBetsService.updateStatisticsBets',
-      });
+      this.logger.error(e.message);
     }
   }
 }
