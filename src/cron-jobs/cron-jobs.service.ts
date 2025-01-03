@@ -73,11 +73,12 @@ export class CronJobsService {
           where: betId
             ? { id: betId }
             : {
-                status: Not(TrainingBetsStatusEnum.AGENDADA),
-              },
+              status: Not(TrainingBetsStatusEnum.AGENDADA),
+            },
         });
 
       const today = moment();
+      let hasBetsClosed = false;
       for (const trainingBet of trainingBets) {
         const {
           status,
@@ -118,9 +119,11 @@ export class CronJobsService {
             if (!participantTraining) {
               betDay.totalFaults += 1;
               participant.faults += 1;
-              if (participant.faults > faultsAllowed)
-                participant.declassified = true;
             }
+
+            if (participant.faults > faultsAllowed)
+              participant.declassified = true;
+            else participant.declassified = false;
           });
         });
 
@@ -182,6 +185,8 @@ export class CronJobsService {
           await this.trainingBetsService.update(trainingBetId, {
             status: newTrainingBetStatus,
           });
+
+        if (newTrainingBetStatus === TrainingBetsStatusEnum.ENCERRADA) hasBetsClosed = true;
       }
 
       const userIds: number[] = [];
@@ -193,6 +198,11 @@ export class CronJobsService {
 
       // Atualiza a pontuação geral dos Usuários
       await CronJobsService.updateStatisticsRanking();
+
+      if (hasBetsClosed) {
+        // Atualiza os valores das penalidades de apostas encerradas
+        await CronJobsService.updateMinimumPenaltyAmount();
+      }
 
       if (betId) logMessage = `Apostas ${betId} foi atualizada`;
     } catch (e) {
@@ -245,6 +255,33 @@ export class CronJobsService {
       scores.map(async (score) => {
         await this.rankingService.update({ user: { id: score.userId } }, score);
       });
+    } catch (e) {
+      logMessage = e.message;
+      logLevel = LogLevelEnum.ERROR;
+    } finally {
+      // Registro de sincronização
+      await this.systemLogsService.upsert({
+        level: logLevel,
+        message: logMessage,
+        source: 'RankingService.updateStatisticsRanking',
+      });
+    }
+  }
+
+  @Cron('10 0 * * *') // Executa todo dia às 00:10
+  static async updateMinimumPenaltyAmount() {
+    let logLevel = LogLevelEnum.INFO;
+    let logMessage = 'Valores de penalidades atualizados';
+    try {
+      const trainingBets = await this.trainingBetsService.findAll({
+        where: { status: TrainingBetsStatusEnum.ENCERRADA },
+      });
+
+
+
+
+
+
     } catch (e) {
       logMessage = e.message;
       logLevel = LogLevelEnum.ERROR;

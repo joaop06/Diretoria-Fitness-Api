@@ -44,4 +44,24 @@ export class ParticipantsController {
       new Exception(e);
     }
   }
+
+  @Get('participants-by-training-bet/:betId')
+  async findParticipantsByTrainingBet(@Param('betId') betId: string) {
+    try {
+      return await this.participantsService.findParticipantsByTrainingBet(
+        +betId,
+      );
+    } catch (e) {
+      new Exception(e);
+    }
+  }
+
+  @Get('winning-participants/:betId')
+  async findWinningParticipants(@Param('betId') betId: string) {
+    try {
+      return await this.participantsService.findWinningParticipants(+betId);
+    } catch (e) {
+      new Exception(e);
+    }
+  }
 }

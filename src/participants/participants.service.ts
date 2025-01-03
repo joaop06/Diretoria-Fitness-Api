@@ -1,6 +1,7 @@
 import * as moment from 'moment';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
+import { readFiles } from '../../helper/read.files';
 import { UsersService } from '../users/users.service';
 import { validateDaysComplete } from '../../helper/dates';
 import { UsersEntity } from '../users/entities/users.entity';
@@ -8,9 +9,11 @@ import { LevelEnum } from '../system-logs/enum/log-level.enum';
 import { CronJobsService } from '../cron-jobs/cron-jobs.service';
 import { ParticipantsEntity } from './entities/participants.entity';
 import { CreateParticipantDto } from './dto/create-participant.dto';
+import { Exception } from '../../public/interceptors/exception.filter';
 import { SystemLogsService } from '../system-logs/system-logs.service';
 import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import { FindOptionsDto, FindReturnModelDto } from '../../public/dto/find.dto';
+import { TrainingBetsStatusEnum } from '../../src/training-bets/enum/status.enum';
 import { TrainingBetEntity } from '../training-bets/entities/training-bet.entity';
 
 @Injectable()
@@ -28,7 +31,7 @@ export class ParticipantsService {
 
     @Inject(forwardRef(() => UsersService))
     private usersService: UsersService,
-  ) {}
+  ) { }
 
   async create(object: CreateParticipantDto): Promise<ParticipantsEntity> {
     try {
@@ -180,6 +183,119 @@ export class ParticipantsService {
         level: LevelEnum.ERROR,
         message: `Falha ao atualizar aproveitamento do participante ${participantId}`,
       });
+    }
+  }
+
+  async findParticipantsByTrainingBet(betId: number) {
+    try {
+      const trainingBet = await this.trainingBetRepository.findOne({
+        relations: { participants: { user: true } },
+        where: {
+          id: betId,
+        },
+        select: {
+          participants: {
+            id: true,
+            declassified: true,
+            user: {
+              name: true,
+              wins: true,
+              losses: true,
+              profileImagePath: true,
+            },
+          },
+        },
+      });
+      if (!trainingBet) new Exception('Aposta não encontrada');
+      const { minimumPenaltyAmount } = trainingBet;
+
+      /**
+       * Monta a listagem de participantes
+       */
+      type Participant = ParticipantsEntity & { penaltyAmount?: number };
+      const participants: Participant[] = trainingBet.participants.map((participant) => ({
+        ...participant,
+        user: {
+          ...participant.user,
+          // Faz a Leitura das imagens dos usuários participantes
+          profileImagePath: readFiles(participant?.user?.profileImagePath),
+        },
+      }));
+
+      /**
+       * Encontra a quantidade de participantes desclassificados
+       * para calcular o valor da penalidade individual.
+       */
+      const quantityDeclassifiedParticipants = participants.reduce(
+        (acc, curr) => {
+          if (curr.declassified === true) acc++;
+          return acc;
+        },
+        0,
+      );
+
+      /**
+       * Se houver participantes desclassificados,
+       * calcula o valor da penalidade individual.
+       */
+      if (quantityDeclassifiedParticipants) {
+        const penaltyAmount = parseFloat(
+          (+minimumPenaltyAmount / quantityDeclassifiedParticipants).toFixed(2),
+        );
+        participants.forEach((participant) => {
+          if (participant.declassified === true)
+            participant.penaltyAmount = penaltyAmount;
+        });
+      }
+
+      return participants;
+    } catch (e) {
+      throw e;
+    }
+  }
+
+  async findWinningParticipants(betId: number) {
+    try {
+      const trainingBet = await this.trainingBetRepository.findOne({
+        relations: { participants: { user: true } },
+        where: {
+          id: betId,
+          participants: { declassified: false },
+        },
+        select: {
+          participants: {
+            id: true,
+            user: {
+              name: true,
+              wins: true,
+              losses: true,
+              profileImagePath: true,
+            },
+          },
+        },
+      });
+      if (!trainingBet) new Exception('Aposta não encontrada');
+
+      /**
+       * Faz a Leitura das imagens dos usuários participantes
+       */
+      const participants = trainingBet.participants.map((participant) => {
+        if (participant?.user?.profileImagePath !== undefined) {
+          participant.user.profileImagePath = readFiles(
+            participant.user.profileImagePath,
+          );
+        }
+
+        return participant;
+      });
+
+      if (trainingBet.status !== TrainingBetsStatusEnum.ENCERRADA) {
+        new Exception('Aposta não encerrada. Ainda não há ganhadores');
+      }
+
+      return participants;
+    } catch (e) {
+      throw e;
     }
   }
 }
