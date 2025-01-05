@@ -1,5 +1,5 @@
 import { ParsedQs } from 'qs';
-import { FindOptionsDto } from '../dto/find.dto';
+import { FindOptionsDto } from '../dtos/find.dto';
 import { Response, Request, NextFunction } from 'express';
 import { Injectable, NestMiddleware } from '@nestjs/common';
 
