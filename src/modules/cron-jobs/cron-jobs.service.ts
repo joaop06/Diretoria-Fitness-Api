@@ -182,9 +182,10 @@ export class CronJobsService {
             today,
           );
         if (status !== newTrainingBetStatus)
-          await this.trainingBetsService.update(trainingBetId, {
-            status: newTrainingBetStatus,
-          });
+          await this.trainingBetsService.updateTrainingBetStatistics(
+            trainingBetId,
+            { status: newTrainingBetStatus },
+          );
 
         if (newTrainingBetStatus === TrainingBetsStatusEnum.ENCERRADA)
           hasBetsClosed = true;
@@ -286,19 +287,22 @@ export class CronJobsService {
           .add(1, 'month')
           .startOf('days');
 
+        let { minimumPenaltyAmount } = trainingBet;
         if (finalDateOneMonthLater.isBefore(today)) {
           // Acresce 50% no valor da penalidade após 30 dias da Data Final
-          const { minimumPenaltyAmount } = trainingBet;
-          trainingBet.minimumPenaltyAmount =
+          minimumPenaltyAmount =
             +minimumPenaltyAmount / 2 + +minimumPenaltyAmount;
         }
 
         // Valida se todos os desclassificados pagaram a penalidade
-        trainingBet.totalPenaltyPaid = trainingBet.participants.every(
+        const totalPenaltyPaid = trainingBet.participants.every(
           (participant) => participant.penaltyPaid === true,
         );
 
-        await this.trainingBetsService.update(trainingBet.id, trainingBet);
+        await this.trainingBetsService.updateTrainingBetStatistics(
+          trainingBet.id,
+          { totalPenaltyPaid, minimumPenaltyAmount },
+        );
       });
     } catch (e) {
       logMessage = e.message;

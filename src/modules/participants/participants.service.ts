@@ -32,7 +32,7 @@ export class ParticipantsService {
 
     @Inject(forwardRef(() => UsersService))
     private usersService: UsersService,
-  ) { }
+  ) {}
 
   async create(object: CreateParticipantDto): Promise<ParticipantsEntity> {
     try {
@@ -47,6 +47,12 @@ export class ParticipantsService {
         where: { id: trainingBetId },
       });
       if (!trainingBet) throw new Error(`Aposta não encontrada`);
+
+      /**
+       * Verifica se o usuário possui
+       * penalidades não pagas de outras apostas
+       */
+      await this.verifyIfHasUnpaidPenalty(object.userId);
 
       /**
        * Validação de início da aposta
@@ -79,6 +85,24 @@ export class ParticipantsService {
       // Atualiza a pontuação do usuário com o novo treino realizado
       await CronJobsService.updateStatisticsRanking(object.userId);
     }
+  }
+
+  async verifyIfHasUnpaidPenalty(userId: number) {
+    const trainingBetsCloseds = await this.trainingBetRepository.find({
+      relations: { participants: true },
+      where: {
+        status: TrainingBetsStatusEnum.ENCERRADA,
+        participants: { userId: userId, declassified: true },
+      },
+    });
+    const hasUnpaidPenalty = trainingBetsCloseds.find((trainingBet) =>
+      trainingBet.participants.find(
+        (participant) => participant.penaltyPaid === false,
+      ),
+    );
+
+    if (hasUnpaidPenalty)
+      throw new Error(`Penalidade não paga na Aposta ${hasUnpaidPenalty.id}`);
   }
 
   async update(id: number, object: Partial<ParticipantsEntity>) {
@@ -197,9 +221,12 @@ export class ParticipantsService {
         select: {
           participants: {
             id: true,
+            faults: true,
+            utilization: true,
             penaltyPaid: true,
             declassified: true,
             user: {
+              id: true,
               name: true,
               wins: true,
               losses: true,
@@ -247,8 +274,8 @@ export class ParticipantsService {
           (+minimumPenaltyAmount / quantityDeclassifiedParticipants).toFixed(2),
         );
         participants.forEach((participant) => {
-          if (participant.declassified === true)
-            participant.penaltyAmount = penaltyAmount;
+          const { declassified } = participant;
+          participant.penaltyAmount = declassified ? penaltyAmount : null;
         });
       }
 
@@ -260,6 +287,7 @@ export class ParticipantsService {
 
   async findWinningParticipants(betId: number) {
     try {
+      let participants = [];
       const trainingBet = await this.trainingBetRepository.findOne({
         relations: { participants: { user: true } },
         where: {
@@ -270,6 +298,7 @@ export class ParticipantsService {
           participants: {
             id: true,
             user: {
+              id: true,
               name: true,
               wins: true,
               losses: true,
@@ -278,12 +307,18 @@ export class ParticipantsService {
           },
         },
       });
-      if (!trainingBet) new Exception('Aposta não encontrada');
+
+      if (
+        !trainingBet ||
+        trainingBet.status !== TrainingBetsStatusEnum.ENCERRADA
+      ) {
+        return participants;
+      }
 
       /**
        * Faz a Leitura das imagens dos usuários participantes
        */
-      const participants = trainingBet.participants.map((participant) => {
+      participants = trainingBet.participants.map((participant) => {
         if (participant?.user?.profileImagePath !== undefined) {
           participant.user.profileImagePath = readFiles(
             participant.user.profileImagePath,
@@ -292,10 +327,6 @@ export class ParticipantsService {
 
         return participant;
       });
-
-      if (trainingBet.status !== TrainingBetsStatusEnum.ENCERRADA) {
-        new Exception('Aposta não encerrada. Ainda não há ganhadores');
-      }
 
       return participants;
     } catch (e) {
@@ -337,7 +368,7 @@ export class ParticipantsService {
         (p) => p.id === participantId,
       );
       if (!participant) new Exception('Participante não encontrado');
-      if (!participant.declassified === false)
+      if (participant.declassified === false)
         new Exception('Participante não está desclassificado');
 
       // Atualiza o participante como tendo pago a penalidade

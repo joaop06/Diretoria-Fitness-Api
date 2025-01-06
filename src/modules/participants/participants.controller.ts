@@ -17,7 +17,7 @@ import {
 
 @Controller('participants')
 export class ParticipantsController {
-  constructor(private readonly participantsService: ParticipantsService) { }
+  constructor(private readonly participantsService: ParticipantsService) {}
 
   @Post()
   async create(
@@ -65,7 +65,7 @@ export class ParticipantsController {
     }
   }
 
-  @Get('participants-by-training-bet/:betId')
+  @Get('by-training-bet/:betId')
   async findParticipantsByTrainingBet(@Param('betId') betId: string) {
     try {
       return await this.participantsService.findParticipantsByTrainingBet(
@@ -76,7 +76,7 @@ export class ParticipantsController {
     }
   }
 
-  @Get('winning-participants/:betId')
+  @Get('winning/:betId')
   async findWinningParticipants(@Param('betId') betId: string) {
     try {
       return await this.participantsService.findWinningParticipants(+betId);

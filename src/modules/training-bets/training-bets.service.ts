@@ -29,7 +29,7 @@ export class TrainingBetsService {
     private readonly usersService: UsersService,
 
     private readonly betDaysService: BetDaysService,
-  ) { }
+  ) {}
 
   async validateTrainingBetStatus(
     trainingBetId: number,
@@ -300,6 +300,18 @@ export class TrainingBetsService {
     } finally {
       /** Atualiza estatísticas da Aposta */
       await CronJobsService.updateStatisticsBets(id);
+    }
+  }
+
+  async updateTrainingBetStatistics(
+    id: number,
+    object: Partial<TrainingBetEntity>,
+  ) {
+    try {
+      return await this.trainingBetRepository.update(id, object);
+    } catch (e) {
+      this.logger.error(e);
+      throw e;
     }
   }
 

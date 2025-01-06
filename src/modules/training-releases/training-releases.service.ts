@@ -21,7 +21,7 @@ export class TrainingReleasesService {
     private usersService: UsersService,
     private betDaysService: BetDaysService,
     private participantsService: ParticipantsService,
-  ) { }
+  ) {}
 
   async create(
     object: CreateTrainingReleasesDto,
@@ -84,7 +84,7 @@ export class TrainingReleasesService {
 
       return await this.trainingReleasesRepository.update(id, { imagePath });
     } catch (e) {
-      fs.unlink(object.imagePath, () => { });
+      fs.unlink(object.imagePath, () => {});
       throw e;
     }
   }
