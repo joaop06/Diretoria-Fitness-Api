@@ -11,19 +11,19 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { dataSourceOptions } from '../config/data-source';
 
-import { AuthModule } from './auth/auth.module';
-import { EmailModule } from './email/email.module';
-import { UsersModule } from './users/users.module';
-import { RankingModule } from './ranking/ranking.module';
-import { BetDaysModule } from './bet-days/bet-days.module';
-import { CronJobsModule } from './cron-jobs/cron-jobs.module';
-import { UsersLogsModule } from './users-logs/users-logs.module';
-import { JwtAuthGuard } from '../public/guards/jwt/jwt-auth.guard';
-import { SystemLogsModule } from './system-logs/system-logs.module';
-import { ParticipantsModule } from './participants/participants.module';
-import { TrainingBetsModule } from './training-bets/training-bets.module';
-import { OnlyHomologGuard } from '../public/guards/homolog/only-homologation.guard';
-import { TrainingReleasesModule } from './training-releases/training-releases.module';
+import { AuthModule } from './modules/auth/auth.module';
+import { EmailModule } from './modules/email/email.module';
+import { JwtAuthGuard } from './guards/jwt/jwt-auth.guard';
+import { UsersModule } from './modules/users/users.module';
+import { RankingModule } from './modules/ranking/ranking.module';
+import { BetDaysModule } from './modules/bet-days/bet-days.module';
+import { CronJobsModule } from './modules/cron-jobs/cron-jobs.module';
+import { UsersLogsModule } from './modules/users-logs/users-logs.module';
+import { SystemLogsModule } from './modules/system-logs/system-logs.module';
+import { OnlyHomologGuard } from './guards/homolog/only-homologation.guard';
+import { ParticipantsModule } from './modules/participants/participants.module';
+import { TrainingBetsModule } from './modules/training-bets/training-bets.module';
+import { TrainingReleasesModule } from './modules/training-releases/training-releases.module';
 
 @Module({
   imports: [

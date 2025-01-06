@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { SystemLogsService } from './system-logs/system-logs.service';
+import { SystemLogsService } from './modules/system-logs/system-logs.service';
 
 @Injectable()
 export class AppService {

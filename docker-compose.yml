@@ -1,0 +1,18 @@
+version: '3.8'
+services:
+  db:
+    image: mysql:8.0
+    container_name: diretoria_fitness
+    restart: always
+    environment:
+      MYSQL_USER: diretoria_fitness
+      MYSQL_DATABASE: diretoria_fitness
+      MYSQL_PASSWORD: diretoria_fitness
+      MYSQL_ROOT_PASSWORD: diretoria_fitness
+    ports:
+      - "3306:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+
+volumes:
+  db_data:
