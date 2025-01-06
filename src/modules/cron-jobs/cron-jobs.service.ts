@@ -73,8 +73,8 @@ export class CronJobsService {
           where: betId
             ? { id: betId }
             : {
-                status: Not(TrainingBetsStatusEnum.AGENDADA),
-              },
+              status: Not(TrainingBetsStatusEnum.ENCERRADA),
+            },
         });
 
       const today = moment();
