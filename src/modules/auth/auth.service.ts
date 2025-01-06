@@ -13,7 +13,7 @@ export class AuthService {
   constructor(
     private jwtService: JwtService,
     private usersService: UsersService,
-  ) { }
+  ) {}
 
   async validateUser(object: LoginDto) {
     const { email, password } = object;

@@ -10,7 +10,7 @@ export class UsersLogsService {
   constructor(
     @InjectRepository(UsersLogEntity)
     private usersLogRepository: Repository<UsersLogEntity>,
-  ) { }
+  ) {}
 
   async create(object: CreateUsersLogDto): Promise<UsersLogEntity> {
     const userLog = this.usersLogRepository.create(object);

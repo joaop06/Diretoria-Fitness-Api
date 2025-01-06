@@ -53,4 +53,4 @@ import { TrainingReleasesModule } from './modules/training-releases/training-rel
     { provide: APP_GUARD, useClass: OnlyHomologGuard },
   ],
 })
-export class AppModule { }
+export class AppModule {}

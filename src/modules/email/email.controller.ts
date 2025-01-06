@@ -6,7 +6,7 @@ import { SendVerificationCodeDto } from './dto/send-verification-code.dto';
 
 @Controller('email')
 export class EmailController {
-  constructor(private readonly emailService: EmailService) { }
+  constructor(private readonly emailService: EmailService) {}
 
   @Public()
   @OnlyHomolog()

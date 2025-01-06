@@ -4,7 +4,7 @@ import { Exception } from '../../interceptors/exception.filter';
 
 @Controller('ranking')
 export class RankingController {
-  constructor(private readonly rankingService: RankingService) { }
+  constructor(private readonly rankingService: RankingService) {}
 
   @Get()
   async findAll() {

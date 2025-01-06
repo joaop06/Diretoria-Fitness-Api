@@ -6,7 +6,7 @@ import { FindOptionsDto, FindReturnModelDto } from '../../dtos/find.dto';
 
 @Controller('users-logs')
 export class UsersLogsController {
-  constructor(private readonly usersLogsService: UsersLogsService) { }
+  constructor(private readonly usersLogsService: UsersLogsService) {}
 
   @Get()
   async findAll(

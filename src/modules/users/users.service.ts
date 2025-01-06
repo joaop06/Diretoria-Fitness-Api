@@ -44,7 +44,7 @@ export class UsersService {
 
     @Inject(forwardRef(() => ParticipantsService))
     private readonly participantsService: ParticipantsService,
-  ) { }
+  ) {}
 
   async saveAndSendVerificationCode(
     userId: number,
@@ -235,7 +235,7 @@ export class UsersService {
 
       return await this.usersRepository.update(id, { profileImagePath });
     } catch (e) {
-      fs.unlink(object.profileImagePath, () => { });
+      fs.unlink(object.profileImagePath, () => {});
       throw e;
     }
   }
