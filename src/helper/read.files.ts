@@ -1,4 +1,7 @@
 import * as fs from 'fs';
+import { Logger } from '@nestjs/common';
+
+const logger = new Logger();
 
 type encodingValues =
   | 'ascii'
@@ -16,10 +19,13 @@ type encodingValues =
 
 function readFiles(path: string, encoding: encodingValues = 'base64') {
   try {
+    if (!!path === false)
+      throw new Error('Caminho para arquivo ou diretório inválido');
+
     path = fs.readFileSync(path, { encoding });
   } catch (e) {
     path = null;
-    console.error(e);
+    logger.error(e);
   } finally {
     return path;
   }

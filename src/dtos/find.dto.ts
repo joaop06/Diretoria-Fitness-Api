@@ -53,7 +53,7 @@ export class FindOptionsDto<T> implements FindManyOptions {
     });
   }
 
-  buildOrdenation(order: string) {
+  buildOrdenation(order: string = '') {
     try {
       const e = new Error();
       let ordenation: Array<any>;
@@ -75,7 +75,7 @@ export class FindOptionsDto<T> implements FindManyOptions {
           : newDirection;
       });
     } catch (e) {
-      console.error(e);
+      console.error(e.message);
       this.order = { createdAt: 'DESC' };
     }
   }

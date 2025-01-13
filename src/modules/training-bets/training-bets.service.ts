@@ -3,9 +3,9 @@ config();
 
 import * as moment from 'moment';
 import { InjectRepository } from '@nestjs/typeorm';
+import { Injectable, Logger } from '@nestjs/common';
 import { readFiles } from '../../helper/read.files';
 import { Repository, FindManyOptions } from 'typeorm';
-import { UsersService } from '../users/users.service';
 import { TrainingBetsStatusEnum } from './enum/status.enum';
 import { UsersEntity } from '../users/entities/users.entity';
 import { BetDaysService } from '../bet-days/bet-days.service';
@@ -13,7 +13,6 @@ import { Exception } from '../../interceptors/exception.filter';
 import { CronJobsService } from '../cron-jobs/cron-jobs.service';
 import { TrainingBetEntity } from './entities/training-bet.entity';
 import { CreateTrainingBetDto } from './dto/create-training-bet.dto';
-import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import { FindOptionsDto, FindReturnModelDto } from '../../dtos/find.dto';
 import { isAfter, isBefore, validateDaysComplete } from '../../helper/dates';
 
@@ -24,9 +23,6 @@ export class TrainingBetsService {
   constructor(
     @InjectRepository(TrainingBetEntity)
     private readonly trainingBetRepository: Repository<TrainingBetEntity>,
-
-    @Inject(forwardRef(() => UsersService))
-    private readonly usersService: UsersService,
 
     private readonly betDaysService: BetDaysService,
   ) {}
@@ -100,9 +96,9 @@ export class TrainingBetsService {
   }
 
   private async validatePeriodConflict(object: Partial<TrainingBetEntity>) {
-    let conflict: TrainingBetEntity | null;
+    let conflictBet: TrainingBetEntity | null;
     if (object.id) {
-      conflict = await this.trainingBetRepository
+      conflictBet = await this.trainingBetRepository
         .createQueryBuilder('training_bets')
         .where('training_bets.initialDate < :finalDate', {
           finalDate: object.finalDate,
@@ -113,7 +109,7 @@ export class TrainingBetsService {
         .andWhere('training_bets.id != :id', { id: object.id })
         .getOne();
     } else {
-      conflict = await this.trainingBetRepository
+      conflictBet = await this.trainingBetRepository
         .createQueryBuilder('training_bets')
         .where('training_bets.initialDate < :finalDate', {
           finalDate: object.finalDate,
@@ -124,8 +120,12 @@ export class TrainingBetsService {
         .getOne();
     }
 
-    if (!!conflict) {
-      throw new Error('Já existe uma aposta entre o período informado');
+    if (!!conflictBet) {
+      const finalDate = moment(conflictBet.finalDate).format('DD/MM/YYYY');
+      const initialDate = moment(conflictBet.initialDate).format('DD/MM/YYYY');
+      throw new Error(
+        `Conflito de Período: Aposta ${conflictBet.id} entre ${initialDate} e ${finalDate}`,
+      );
     }
   }
 

@@ -10,10 +10,10 @@
     "typeorm": "ts-node ./node_modules/typeorm/cli",
     "build": "tsc -p tsconfig.build.json && npm run copy-widgets-templates",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix && prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
-    "dev": "nodemon --watch src --ext ts,tsx --exec \"npm run build && npm run clean:build && node dist/src/main.js\"",
-    "migration:run": "npm run build && npm run clean:build && npm run typeorm -- migration:run -d config/data-source.ts",
+    "dev": "nodemon --watch src --ext ts,tsx --exec \"npm run clean:build && npm run build && node dist/src/main.js\"",
+    "migration:run": "npm run clean:build && npm run build && npm run typeorm -- migration:run -d config/data-source.ts",
     "migration:create": "npm run typeorm -- migration:create -d config/data-source.ts config/migrations/$npm_config_name",
-    "migration:revert": "npm run build && npm run clean:build && npm run typeorm -- migration:revert -d config/data-source.ts",
+    "migration:revert": "npm run clean:build && npm run build && npm run typeorm -- migration:revert -d config/data-source.ts",
     "migration:generate": "npm run typeorm -- migration:generate -d config/data-source.ts config/migrations/$npm_config_name",
     "copy-widgets-templates": "copyfiles -u 1 \"public/widgets/**/*\" dist/public && copyfiles -u 1 \"src/email/templates/**/*\" dist/src"
   },

@@ -1,5 +1,6 @@
 import * as moment from 'moment';
 import { Repository } from 'typeorm';
+import { plainToClass } from 'class-transformer';
 import { InjectRepository } from '@nestjs/typeorm';
 import { readFiles } from '../../helper/read.files';
 import { UsersService } from '../users/users.service';
@@ -243,14 +244,15 @@ export class ParticipantsService {
        */
       type Participant = ParticipantsEntity & { penaltyAmount?: number };
       const participants: Participant[] = trainingBet.participants.map(
-        (participant) => ({
-          ...participant,
-          user: {
-            ...participant.user,
-            // Faz a Leitura das imagens dos usuários participantes
-            profileImagePath: readFiles(participant?.user?.profileImagePath),
-          },
-        }),
+        (participant) =>
+          plainToClass(ParticipantsEntity, {
+            ...participant,
+            user: {
+              ...participant.user,
+              // Faz a Leitura das imagens dos usuários participantes
+              profileImagePath: readFiles(participant?.user?.profileImagePath),
+            },
+          }),
       );
 
       /**
