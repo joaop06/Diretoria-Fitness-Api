@@ -15,7 +15,7 @@
     "migration:create": "npm run typeorm -- migration:create -d config/data-source.ts config/migrations/$npm_config_name",
     "migration:revert": "npm run clean:build && npm run build && npm run typeorm -- migration:revert -d config/data-source.ts",
     "migration:generate": "npm run typeorm -- migration:generate -d config/data-source.ts config/migrations/$npm_config_name",
-    "copy-widgets-templates": "copyfiles -u 1 \"public/widgets/**/*\" dist/public && copyfiles -u 1 \"src/email/templates/**/*\" dist/src"
+    "copy-widgets-templates": "copyfiles -u 1 \"src/public/widgets/**/*\" dist/src && copyfiles -u 1 \"src/modules/email/templates/**/*\" dist/src"
   },
   "dependencies": {
     "@nestjs-modules/mailer": "^2.0.2",
