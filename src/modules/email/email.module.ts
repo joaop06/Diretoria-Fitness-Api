@@ -24,6 +24,9 @@ const configService = new ConfigService();
           pass: configService.get('EMAIL_PASS'),
           user: configService.get('EMAIL_USER'),
         },
+        tls: {
+          rejectUnauthorized: false
+        }
       },
       defaults: {
         from: `Diretoria Fitness <${configService.get('EMAIL_USER')}>`,
@@ -41,4 +44,4 @@ const configService = new ConfigService();
   providers: [EmailService],
   controllers: [EmailController],
 })
-export class EmailModule {}
+export class EmailModule { }
