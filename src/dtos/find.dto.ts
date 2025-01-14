@@ -60,7 +60,6 @@ export class FindOptionsDto<T> implements FindManyOptions {
     // Retorna se não houver ordenação padrão
     if (!ordenation.length) return;
 
-
     this.order = {};
     ordenation.forEach((i) => {
       const [field, direction] = i.map((i) => i.trim());

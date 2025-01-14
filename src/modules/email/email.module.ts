@@ -16,6 +16,7 @@ const configService = new ConfigService();
     SystemLogsModule,
     MailerModule.forRoot({
       transport: {
+        timeout: 5000,
         host: configService.get('EMAIL_HOST'),
         port: +configService.get('EMAIL_PORT'),
         secure: configService.get('EMAIL_SECURE') === 'true',
@@ -25,7 +26,7 @@ const configService = new ConfigService();
         },
       },
       defaults: {
-        from: 'Diretoria Fitness <diretoria.fitness2020@gmail.com>',
+        from: `Diretoria Fitness <${configService.get('EMAIL_USER')}>`,
       },
       template: {
         dir: join(__dirname, 'templates'),
