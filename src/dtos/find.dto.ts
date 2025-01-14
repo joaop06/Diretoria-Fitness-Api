@@ -30,7 +30,7 @@ export class FindOptionsDto<T> implements FindManyOptions {
 
   @IsObject()
   @IsOptional()
-  order?: Record<string, 'ASC' | 'DESC'> = { createdAt: 'DESC' };
+  order: Record<string, 'ASC' | 'DESC'> = { createdAt: 'DESC' };
 
   constructor(query: any = {}) {
     this.buildWhereClause(query);
@@ -54,29 +54,22 @@ export class FindOptionsDto<T> implements FindManyOptions {
   }
 
   buildOrdenation(order: string = '') {
-    try {
-      const e = new Error();
-      let ordenation: Array<any>;
-      if (order.startsWith('[[')) ordenation = JSON.parse(order);
+    let ordenation = [];
+    if (order.startsWith('[[')) ordenation = JSON.parse(order);
 
-      if (!ordenation.length) {
-        // Declara erro para aplicar ordenação padrão
-        throw e;
-      }
+    // Retorna se não houver ordenação padrão
+    if (!ordenation.length) return;
 
-      this.order = {};
-      ordenation.forEach((i) => {
-        const [field, direction] = i.map((i) => i.trim());
-        if (!field) throw e;
 
-        const newDirection = direction.toUpperCase();
-        this.order[field] = !['ASC', 'DESC'].includes(newDirection)
-          ? 'ASC'
-          : newDirection;
-      });
-    } catch (e) {
-      console.error(e.message);
-      this.order = { createdAt: 'DESC' };
-    }
+    this.order = {};
+    ordenation.forEach((i) => {
+      const [field, direction] = i.map((i) => i.trim());
+      if (!field) return;
+
+      const newDirection = direction.toUpperCase();
+      this.order[field] = !['ASC', 'DESC'].includes(newDirection)
+        ? 'ASC'
+        : newDirection;
+    });
   }
 }
