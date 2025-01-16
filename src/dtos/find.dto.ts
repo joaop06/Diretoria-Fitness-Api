@@ -13,7 +13,7 @@ export class FindReturnModelDto<T> {
   rows: T[];
   count: number;
 }
-export class FindOptionsDto<T> implements FindManyOptions {
+export class FindOptionsDto<T = any> implements FindManyOptions {
   @IsNumber()
   @IsOptional()
   @Type(() => Number)

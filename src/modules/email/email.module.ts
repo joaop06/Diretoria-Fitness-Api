@@ -1,8 +1,9 @@
 import { join } from 'path';
 import { config } from 'dotenv';
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { EmailService } from './email.service';
+import { UsersModule } from '../users/users.module';
 import { EmailController } from './email.controller';
 import { MailerModule } from '@nestjs-modules/mailer';
 import { SystemLogsModule } from '../system-logs/system-logs.module';
@@ -13,6 +14,7 @@ const configService = new ConfigService();
 
 @Module({
   imports: [
+    forwardRef(() => UsersModule),
     SystemLogsModule,
     MailerModule.forRoot({
       transport: {
@@ -25,8 +27,8 @@ const configService = new ConfigService();
           user: configService.get('EMAIL_USER'),
         },
         tls: {
-          rejectUnauthorized: false
-        }
+          rejectUnauthorized: false,
+        },
       },
       defaults: {
         from: `Diretoria Fitness <${configService.get('EMAIL_USER')}>`,
@@ -44,4 +46,4 @@ const configService = new ConfigService();
   providers: [EmailService],
   controllers: [EmailController],
 })
-export class EmailModule { }
+export class EmailModule {}

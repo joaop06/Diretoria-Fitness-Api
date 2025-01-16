@@ -1,29 +1,20 @@
 import { EmailService } from './email.service';
+import { FindOptionsDto } from '../../dtos/find.dto';
 import { Public } from '../../decorators/public.decorator';
 import { Exception } from '../../interceptors/exception.filter';
-import { Body, Controller, Post, HttpCode } from '@nestjs/common';
-import { OnlyHomolog } from '../../decorators/only-homolog.decorator';
-import { SendVerificationCodeDto } from './dto/send-verification-code.dto';
+import { Controller, Post, HttpCode, Query } from '@nestjs/common';
 
 @Controller('email')
 export class EmailController {
   constructor(private readonly emailService: EmailService) {}
 
   @Public()
-  @OnlyHomolog()
   @HttpCode(200)
-  @Post('verification-code')
-  async sendVerificationCode(
-    @Body() object: SendVerificationCodeDto,
-  ): Promise<string> {
+  @Post('resend-verification-code')
+  async resendVerificationCode(@Query() { where: { userId } }: FindOptionsDto) {
     try {
-      await this.emailService.sendVerificationCode(
-        object.name,
-        object.email,
-        object.code,
-      );
-
-      return 'E-mail enviado com sucesso!';
+      const result = await this.emailService.resendVerificationCode(+userId);
+      return { result, message: 'Código de verificação enviado!' };
     } catch (e) {
       new Exception(e);
     }

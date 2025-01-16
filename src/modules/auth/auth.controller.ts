@@ -29,7 +29,7 @@ export class AuthController {
   }
 
   @Public()
-  @Post('verification-code')
+  @Post('validate-verification-code')
   async verifyUserVerificationCode(
     @Body() object: UserVerificationCodeDto,
   ): Promise<string> {

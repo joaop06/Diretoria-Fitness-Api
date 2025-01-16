@@ -46,17 +46,14 @@ export class AuthService {
   ): Promise<string> {
     const user = await this.usersService.findOne(object.userId);
 
-    if (!user) {
-      throw new Error('Usuário não encontrado');
-    }
+    if (!user) throw new Error('Usuário não encontrado');
 
-    if (user.isVerified) throw new Error();
+    if (user.isVerified) throw new Error('E-mail já verificado');
 
     // Verifica se o código é válido e não expirou
     const isCodeValid = user.verificationCode === object.code;
 
-    if (!isCodeValid)
-      throw new Error('Código de Verificação inválido ou expirado');
+    if (!isCodeValid) throw new Error('Código de Verificação inválido');
 
     await this.usersService.update(user.id, {
       isVerified: true,

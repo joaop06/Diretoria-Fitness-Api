@@ -46,18 +46,16 @@ export class UsersService {
     private readonly participantsService: ParticipantsService,
   ) {}
 
-  async saveAndSendVerificationCode(
-    userId: number,
-    name: string,
-    email: string,
-  ): Promise<void> {
+  async generateVerificationCode(userId: number): Promise<number> {
     const verificationCode = Math.floor(Math.random() * 1000000);
 
     // Atualize o usuário com o código de verificação
-    await this.usersRepository.update(userId, { verificationCode });
+    await this.usersRepository.update(userId, {
+      verificationCode,
+      verificationCodeAt: new Date(),
+    });
 
-    // Enviar e-mail de verificação
-    this.emailService.sendVerificationCode(name, email, verificationCode);
+    return verificationCode;
   }
 
   async create(
@@ -75,8 +73,13 @@ export class UsersService {
       // Insere registro do usuário para classificação
       await this.rankingService.create(user.id);
 
-      // Salvar e Enviar o código de verificação
-      await this.saveAndSendVerificationCode(user.id, user.name, object.email);
+      /**
+       * Envia e-mail com
+       * Código de Verificação ao novo usuário
+       */
+      const { name, email } = object;
+      const verificationCode = await this.generateVerificationCode(user.id);
+      this.emailService.sendVerificationCode(name, email, verificationCode);
 
       return {
         user,
@@ -96,6 +99,9 @@ export class UsersService {
   }
 
   async update(id: number, object: UpdateUserDto) {
+    let isUpdatingEmail: boolean;
+    let previousUserData: UsersEntity;
+
     try {
       /**
        * Validação dos dados que serão alterados
@@ -105,15 +111,53 @@ export class UsersService {
         id,
       );
 
-      /** Usuário atualizado */
-      const result = await this.usersRepository.update(id, object);
+      // Dados do usuário antes da atualização
+      previousUserData = await this.usersRepository.findOneBy({ id });
+
+      // Verifica se está atualizado o e-mail
+      isUpdatingEmail =
+        !!object.email && previousUserData.email !== object.email;
+
+      /**
+       * Usuário atualizado
+       *
+       * Se está atualizando o e-mail terá que ser verificado novamente.
+       * Caso contrário, mantém o valor atual do status de verificação do e-mail.
+       */
+      const isVerified =
+        object.isVerified !== undefined
+          ? object.isVerified
+          : isUpdatingEmail
+            ? false
+            : previousUserData.isVerified;
+
+      const result = await this.usersRepository.update(id, {
+        ...object,
+        isVerified,
+      });
 
       /** Insere os logs de alterações */
       await Promise.all(userLogsPromises);
 
-      return result;
+      const message = `Usuário atualizado com sucesso.${isUpdatingEmail ? ' Código de verificação enviado no e-mail' : ''}`;
+
+      return {
+        message,
+        ...result,
+        isUpdatingEmail,
+      };
     } catch (e) {
       throw e;
+    } finally {
+      if (isUpdatingEmail) {
+        const { name } = previousUserData;
+        const verificationCode = await this.generateVerificationCode(id);
+        this.emailService.sendVerificationCode(
+          name,
+          object.email,
+          verificationCode,
+        );
+      }
     }
   }
 

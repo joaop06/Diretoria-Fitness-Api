@@ -38,6 +38,9 @@ export class UsersEntity {
   @Column({ nullable: true })
   verificationCode: number; // Código de Verificação
 
+  @Column({ type: 'datetime', nullable: true })
+  verificationCodeAt?: Date;
+
   /**
    * Ex: 123.4
    * precision -> Total de Dígitos: 4
