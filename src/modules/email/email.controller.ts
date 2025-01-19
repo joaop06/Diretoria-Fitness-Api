@@ -13,8 +13,7 @@ export class EmailController {
   @Post('resend-verification-code')
   async resendVerificationCode(@Query() { where: { userId } }: FindOptionsDto) {
     try {
-      const result = await this.emailService.resendVerificationCode(+userId);
-      return { result, message: 'Código de verificação enviado!' };
+      return await this.emailService.resendVerificationCode(+userId);
     } catch (e) {
       new Exception(e);
     }

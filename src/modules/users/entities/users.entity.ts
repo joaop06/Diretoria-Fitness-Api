@@ -35,9 +35,11 @@ export class UsersEntity {
   @Column({ default: false })
   isVerified: boolean;
 
+  @Exclude()
   @Column({ nullable: true })
   verificationCode: number; // Código de Verificação
 
+  @Exclude()
   @Column({ type: 'datetime', nullable: true })
   verificationCodeAt?: Date;
 

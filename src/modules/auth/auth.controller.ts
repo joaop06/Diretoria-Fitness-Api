@@ -30,9 +30,7 @@ export class AuthController {
 
   @Public()
   @Post('validate-verification-code')
-  async verifyUserVerificationCode(
-    @Body() object: UserVerificationCodeDto,
-  ): Promise<string> {
+  async verifyUserVerificationCode(@Body() object: UserVerificationCodeDto) {
     try {
       return await this.authService.verifyUserVerificationCode(object);
     } catch (e) {

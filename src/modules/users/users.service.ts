@@ -47,7 +47,15 @@ export class UsersService {
   ) {}
 
   async generateVerificationCode(userId: number): Promise<number> {
-    const verificationCode = Math.floor(Math.random() * 1000000);
+    let verificationCode: number;
+
+    do {
+      // Gera um número aleatório de 6 dígitos
+      verificationCode = Math.floor(100000 + Math.random() * 900000); // Garante 6 dígitos
+    } while (
+      verificationCode % 10 === 0 || // Verifica se o último dígito é 0
+      Math.floor(verificationCode / 100000) === 0 // Verifica se o primeiro dígito é 0
+    );
 
     // Atualize o usuário com o código de verificação
     await this.usersRepository.update(userId, {

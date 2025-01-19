@@ -25,8 +25,11 @@ export class ReturnedUserDto {
   @IsBoolean()
   isVerified: boolean;
 
-  @IsNumber()
-  verificationCode: number; // Código de Verificação
+  @Exclude()
+  verificationCode: number;
+
+  @Exclude()
+  verificationCodeAt?: Date;
 
   @IsDecimal()
   @Transform(({ value }) => parseFloat(value))

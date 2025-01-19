@@ -41,10 +41,10 @@ export class AuthService {
     };
   }
 
-  async verifyUserVerificationCode(
-    object: UserVerificationCodeDto,
-  ): Promise<string> {
-    const user = await this.usersService.findOne(object.userId);
+  async verifyUserVerificationCode(object: UserVerificationCodeDto) {
+    const user = (await this.usersService.findOne(
+      object.userId,
+    )) as UsersEntity;
 
     if (!user) throw new Error('Usuário não encontrado');
 
@@ -59,6 +59,6 @@ export class AuthService {
       isVerified: true,
       verificationCode: null,
     });
-    return 'E-mail verificado com sucesso!';
+    return { message: 'E-mail verificado com sucesso!' };
   }
 }

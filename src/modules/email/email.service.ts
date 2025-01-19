@@ -110,14 +110,16 @@ export class EmailService {
       ) {
         const remainingTime = verificationCodeExpiration.diff(today, 'seconds');
         throw new Error(
-          `Aguarde ${remainingTime} segundos antes de solicitar um novo código.`,
+          `Aguarde ${remainingTime} segundos para solicitar novamente`,
         );
       }
 
       // Gera e atualiza usuário com novo Código de Verificação
       const code = await this.usersService.generateVerificationCode(userId);
 
-      return await this.sendVerificationCode(user.name, user.email, code);
+      this.sendVerificationCode(user.name, user.email, code);
+
+      return { message: 'Código de verificação reenviado!' };
     } catch (e) {
       throw e;
     }
