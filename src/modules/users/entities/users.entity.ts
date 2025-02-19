@@ -41,7 +41,7 @@ export class UsersEntity {
 
   @Exclude()
   @Column({ type: 'datetime', nullable: true })
-  verificationCodeAt?: Date;
+  verificationCodeAt: Date;
 
   /**
    * Ex: 123.4
